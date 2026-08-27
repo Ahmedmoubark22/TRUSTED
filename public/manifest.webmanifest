@@ -1,0 +1,12 @@
+{
+  "name": "TRUSTED",
+  "short_name": "TRUSTED",
+  "description": "Everyone knows something. A social mystery game for one shared device.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0C0E",
+  "theme_color": "#0B0C0E",
+  "icons": []
+}

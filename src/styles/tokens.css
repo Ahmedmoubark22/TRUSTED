@@ -1,0 +1,117 @@
+/**
+ * TRUSTED — design tokens.
+ *
+ * Foundation only. Values here are intended to be tuned during the visual
+ * pass; the point at this stage is that every screen reads from one place.
+ */
+
+:root {
+  /* ---------------------------------------------------------------- color */
+  /* Surfaces: a dark room with a single warm light in it. */
+  --color-bg: #0b0c0e;
+  --color-surface: #131519;
+  --color-surface-raised: #1b1e24;
+  --color-surface-sunken: #08090b;
+  --color-border: #262a31;
+  --color-border-strong: #3a4049;
+
+  /* Text */
+  --color-text: #ece7dd;
+  --color-text-muted: #9aa0a9;
+  --color-text-faint: #656b74;
+  --color-text-inverse: #0b0c0e;
+
+  /* Accent: brass. Used for anything the table is meant to act on. */
+  --color-accent: #c9a24a;
+  --color-accent-strong: #e0b95c;
+  --color-accent-dim: #6d5726;
+
+  /* Semantics */
+  --color-danger: #c85a4a;
+  --color-success: #6a9a6b;
+  --color-private: #7f5fb8; /* "this screen is for one player only" */
+
+  --color-overlay: rgba(8, 9, 11, 0.82);
+
+  /* ----------------------------------------------------------- typography */
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Georgia', serif;
+  --font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+
+  /* Type scale — mobile first, ~1.25 ratio */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  --tracking-wide: 0.08em;
+  --tracking-wider: 0.18em;
+
+  /* --------------------------------------------------------------- space */
+  /* 4px base step */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lift: 0 12px 36px rgba(0, 0, 0, 0.55);
+
+  /* Layout: a phone held in one hand, plus device safe areas. */
+  --layout-max-width: 30rem;
+  --layout-gutter: var(--space-5);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Minimum comfortable touch target. */
+  --tap-target: 48px;
+
+  /* -------------------------------------------------------------- motion */
+  --duration-instant: 80ms;
+  --duration-fast: 160ms;
+  --duration-base: 260ms;
+  --duration-slow: 480ms;
+  /* Reveals are deliberately slower than interactions. */
+  --duration-reveal: 900ms;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-entrance: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+
+  --z-content: 1;
+  --z-appbar: 10;
+  --z-overlay: 100;
+  --z-dev: 1000;
+}
+
+/* Respect the OS setting rather than animating regardless. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+    --duration-reveal: 0ms;
+  }
+}

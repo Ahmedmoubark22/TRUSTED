@@ -1,0 +1,324 @@
+@import './tokens.css';
+
+/* ------------------------------------------------------------------ reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+
+  /* Pass-and-play on one device: no rubber-banding, no accidental zoom flash. */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-tight);
+}
+
+/* ------------------------------------------------------------------ shell */
+.app {
+  /* dvh so the iOS URL bar collapsing does not clip the footer. */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--layout-max-width);
+  background: var(--color-bg);
+}
+
+.app__bar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-appbar);
+  padding: calc(var(--safe-top) + var(--space-4)) var(--layout-gutter) var(--space-3);
+  background: linear-gradient(var(--color-bg) 70%, transparent);
+}
+
+.app__eyebrow {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.app__title {
+  font-size: var(--text-xl);
+}
+
+.app__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--layout-gutter) calc(var(--safe-bottom) + var(--space-6));
+}
+
+/* ----------------------------------------------------------------- screen */
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  animation: screen-in var(--duration-base) var(--ease-entrance) both;
+}
+
+.screen__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.screen__kicker {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.screen__title {
+  font-size: var(--text-3xl);
+}
+
+.screen__lede {
+  color: var(--color-text-muted);
+}
+
+.screen__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.screen__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ----------------------------------------------------------------- pieces */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.card--muted {
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+}
+
+.card--locked {
+  opacity: 0.5;
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.card__meta {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.btn {
+  min-height: var(--tap-target);
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    transform var(--duration-instant) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    opacity var(--duration-fast) var(--ease-standard);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent-strong);
+  color: var(--color-text-inverse);
+  font-weight: var(--weight-bold);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.field__input {
+  flex: 1;
+  min-height: var(--tap-target);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-sunken);
+}
+
+.seat {
+  width: 2rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+}
+
+/* Screens that must only be seen by the player holding the device. */
+.private-notice {
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid var(--color-private);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.placeholder-note {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-faint);
+}
+
+/* -------------------------------------------------------------- dev tools */
+.devbar {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-dev);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) calc(var(--safe-bottom) + var(--space-2));
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-sunken);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.devbar__label {
+  color: var(--color-text-faint);
+  letter-spacing: var(--tracking-wide);
+}
+
+.devbar__btn {
+  min-height: 32px;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.devbar__select {
+  flex: 1;
+  min-width: 8rem;
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-family: inherit;
+  font-size: inherit;
+}
