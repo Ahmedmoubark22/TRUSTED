@@ -28,7 +28,7 @@ export function CaseCompleteView() {
           <Card
             key={player.id}
             title={player.name}
-            meta={character ? `${character.name} — ${character.publicRole}` : 'Unassigned'}
+            meta={character ? character.name : 'Unassigned'}
             muted
           />
         );

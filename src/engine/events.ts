@@ -30,6 +30,11 @@ export type GameEvent =
   | { type: 'CONFIRM_ASSIGNMENTS' }
 
   // PRIVATE_BRIEFINGS
+  /** The player at the device confirms they are alone with it. Opens the gate. */
+  | { type: 'UNLOCK_BRIEFING' }
+  /** Reveal the next section of the current player's briefing. */
+  | { type: 'ADVANCE_BRIEFING_STEP' }
+  /** Leave the pass screen and hand the device to the next player. */
   | { type: 'ADVANCE_BRIEFING' }
 
   // TABLE / EVIDENCE / DISCUSSION

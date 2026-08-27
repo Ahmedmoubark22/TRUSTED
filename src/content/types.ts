@@ -11,20 +11,39 @@ export type CharacterId = string;
 export type EvidenceId = string;
 export type TruthBeatId = string;
 
-/** A role a player can be dealt for a case. */
+/**
+ * A role a player can be dealt.
+ *
+ * Public by design. A `CaseDefinition` is handed to every view, so anything
+ * on this type is effectively visible to the whole table — which is why a
+ * character's private knowledge is deliberately NOT here. See
+ * `PrivateBriefing` and `src/content/briefings.ts`.
+ */
 export interface CharacterDefinition {
   id: CharacterId;
-  /** Public name shown at the table. */
+  /** Public name. Safe to show at the table. */
   name: string;
-  /** One line everyone can see. */
-  publicRole: string;
-  /**
-   * Private briefing shown only to the player holding the device during
-   * PRIVATE_BRIEFINGS. Authored content — not engine logic.
-   */
-  privateBriefing: string;
-  /** Private objectives / pressure points for this character. */
-  privateObjectives: string[];
+}
+
+/**
+ * What exactly one character privately knows.
+ *
+ * This never travels with the case definition and never enters game state.
+ * It is reachable only through `getPrivateBriefing`, and only for the
+ * character the engine says may currently be revealed.
+ */
+export interface PrivateBriefing {
+  characterId: CharacterId;
+  /** "You are…" — how the character is introduced to their own player. */
+  identity: string;
+  /** "You know…" */
+  knows: string[];
+  /** "You believe…" */
+  believes: string[];
+  /** "You are hiding…" */
+  hiding: string[];
+  /** "Your goal…" */
+  goal: string;
 }
 
 /** A piece of evidence the table can reveal during the investigation. */
@@ -51,7 +70,7 @@ export interface TruthBeatDefinition {
   body: string;
 }
 
-/** The authored, self-contained definition of a playable case. */
+/** The authored, public definition of a playable case. */
 export interface CaseDefinition {
   id: CaseId;
   title: string;
@@ -66,8 +85,11 @@ export interface CaseDefinition {
   evidence: EvidenceDefinition[];
   /** Ordered beats played out during TRUTH_REVEAL. */
   truthBeats: TruthBeatDefinition[];
-  /** The character who is actually responsible. Revealed at the end. */
-  culpritCharacterId: CharacterId;
-  /** True once the case has been through the final content pass. */
+  /**
+   * The character who is actually responsible. `null` while the case's
+   * resolution has not been authored yet — the reveal step will set this.
+   */
+  culpritCharacterId: CharacterId | null;
+  /** True while any part of the case is still scaffolding. */
   isPlaceholder: boolean;
 }

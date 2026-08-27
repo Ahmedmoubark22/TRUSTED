@@ -1,5 +1,7 @@
 import type { GameEvent } from './events';
+import { nextBriefingStep } from './briefing';
 import { canTransition, type GamePhase } from './phases';
+import { currentBriefingCharacterId } from './selectors';
 import { MAX_PLAYERS, MIN_PLAYERS, createInitialState, makePlayer, makePlayers } from './initialState';
 import type { EngineContext, GameState } from './types';
 import { migrate } from './validate';
@@ -11,6 +13,9 @@ import { migrate } from './validate';
  * no-ops that return the same state reference, so the UI can stay simple:
  * dispatch freely, and the engine decides whether anything happened.
  */
+/** The closed-gate briefing fields. Applied whenever the device changes hands. */
+const CLOSED_BRIEFING = { briefingStep: 'LOCKED', briefingResumed: false } as const;
+
 export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): GameState {
   switch (event.type) {
     case 'RESET':
@@ -27,7 +32,7 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
         ...createInitialState(),
         phase: 'CASE_INTRO',
         caseId: def.id,
-        players: makePlayers(4),
+        players: makePlayers(def.minPlayers),
         createdAt: ctx.now(),
         updatedAt: ctx.now(),
       };
@@ -108,16 +113,37 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
 
     case 'CONFIRM_ASSIGNMENTS': {
       if (Object.keys(state.assignments).length !== state.players.length) return state;
-      return go(state, 'PRIVATE_BRIEFINGS', ctx, { briefingCursor: 0 });
+      return go(state, 'PRIVATE_BRIEFINGS', ctx, { ...CLOSED_BRIEFING, briefingCursor: 0 });
+    }
+
+    case 'UNLOCK_BRIEFING': {
+      if (state.phase !== 'PRIVATE_BRIEFINGS') return state;
+      // Only the gate opens a briefing, and only from closed.
+      if (state.briefingStep !== 'LOCKED') return state;
+      if (!currentBriefingCharacterId(state)) return state;
+      return touch({ ...state, briefingStep: 'IDENTITY', briefingResumed: false }, ctx);
+    }
+
+    case 'ADVANCE_BRIEFING_STEP': {
+      if (state.phase !== 'PRIVATE_BRIEFINGS') return state;
+      // LOCKED is not walked past — it must be opened deliberately.
+      if (state.briefingStep === 'LOCKED') return state;
+      const next = nextBriefingStep(state.briefingStep);
+      if (!next) return state;
+      return touch({ ...state, briefingStep: next }, ctx);
     }
 
     case 'ADVANCE_BRIEFING': {
       if (state.phase !== 'PRIVATE_BRIEFINGS') return state;
+      // The pass screen is the only way through to the next player. Without
+      // this, a stray dispatch mid-briefing would move the cursor while the
+      // gate was still open — landing the next player inside live content.
+      if (state.briefingStep !== 'HANDOFF') return state;
       const next = state.briefingCursor + 1;
       if (next < state.players.length) {
-        return touch({ ...state, briefingCursor: next }, ctx);
+        return touch({ ...state, ...CLOSED_BRIEFING, briefingCursor: next }, ctx);
       }
-      return go(state, 'TABLE', ctx, { briefingCursor: 0 });
+      return go(state, 'TABLE', ctx, { ...CLOSED_BRIEFING, briefingCursor: 0 });
     }
 
     case 'OPEN_EVIDENCE':

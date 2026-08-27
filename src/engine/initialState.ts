@@ -31,6 +31,8 @@ export function createInitialState(): GameState {
     players: [],
     assignments: {},
     briefingCursor: 0,
+    briefingStep: 'LOCKED',
+    briefingResumed: false,
     revealedEvidence: [],
     voteCursor: 0,
     votes: {},

@@ -1,3 +1,4 @@
+import { isBriefingStep } from './briefing';
 import { isPhase } from './phases';
 import type { GameState, Player } from './types';
 import { SCHEMA_VERSION } from './types';
@@ -39,6 +40,8 @@ export function isGameState(value: unknown): value is GameState {
     value.players.every(isPlayer) &&
     isStringRecord(value.assignments) &&
     typeof value.briefingCursor === 'number' &&
+    isBriefingStep(value.briefingStep) &&
+    typeof value.briefingResumed === 'boolean' &&
     isStringArray(value.revealedEvidence) &&
     typeof value.voteCursor === 'number' &&
     isStringRecord(value.votes) &&

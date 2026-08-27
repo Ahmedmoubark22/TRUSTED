@@ -5,6 +5,9 @@ import type { GameState, PlayerId } from '../../engine/types';
 
 const DEV_NAMES = ['Ana', 'Ben', 'Cass', 'Dov', 'Eli', 'Fay'];
 
+/** Player count for the seeded game. Case 001's slice is authored for four. */
+const DEV_PLAYERS = 4;
+
 /**
  * Builds a coherent 4-player game parked at any phase, so the whole approved
  * flow can be inspected without playing through it. Deterministic: no RNG, so
@@ -13,7 +16,7 @@ const DEV_NAMES = ['Ana', 'Ben', 'Cass', 'Dov', 'Eli', 'Fay'];
  * Every phase gets the state it would plausibly have arrived with — the dev
  * stepper must never drop you into a screen with missing prerequisites.
  */
-export function createDevGame(phase: GamePhase, playerCount = 4): GameState {
+export function createDevGame(phase: GamePhase, playerCount = DEV_PLAYERS): GameState {
   const base = createInitialState();
   if (phase === 'HOME') return base;
 

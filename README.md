@@ -128,6 +128,27 @@ A rejected event returns the **same state reference**. The store treats an
 unchanged reference as "nothing happened" and skips both the subscriber
 notification and the persistence write, so illegal taps are genuinely free.
 
+### Private information
+
+Private briefings are deliberately kept out of both the case definition and the
+game state:
+
+- A `CaseDefinition` is handed to every view, so anything on it is effectively
+  public. Briefings live in [`src/content/briefings.ts`](src/content/briefings.ts),
+  reachable only through a narrow `getPrivateBriefing(caseId, characterId)` lookup.
+- `GameState` records **who** is being briefed and **how far they have read** —
+  never what it said. No secret is ever serialised, persisted, or handed
+  wholesale to a component.
+
+The engine owns the gate. `revealableCharacterId` returns the one character
+whose briefing may be shown right now, or nothing — and it returns an *id*, not
+content, so a careless caller still cannot leak anything. The single bridge
+between the two halves is the `useCurrentBriefing` hook.
+
+While the step is `LOCKED` no briefing is fetched at all, so the gate and the
+pass screen have nothing on them to hide. A refresh always lands back on the
+gate: the phone may be in different hands by then.
+
 ### Persistence
 
 The authoritative state is written to `localStorage` after every change, so a

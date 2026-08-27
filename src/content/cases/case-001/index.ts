@@ -1,15 +1,16 @@
 /**
  * Case 001 — The Last Guest.
  *
- * ⚠ PLACEHOLDER CONTENT ⚠
- * This file exists so the shell has something structurally valid to render and
- * so the engine can be exercised end to end. Every string below is scaffolding,
- * not final writing. Characters, evidence, and truth beats are all replaced in
- * the Case 001 content step.
+ * Four-player vertical slice. The characters and their private briefings are
+ * approved prototype content (see `./characters.ts` and `./briefings.ts`).
  *
- * Shape here is real. Words here are not.
+ * Everything else in this file — intro, evidence, truth beats, resolution —
+ * is still PLACEHOLDER scaffolding, kept only so the later phases have
+ * something structurally valid to render. It is replaced in the evidence and
+ * reveal steps.
  */
 import type { CaseDefinition } from '../../types';
+import { CASE_001_CHARACTERS } from './characters';
 
 export const CASE_001: CaseDefinition = {
   id: 'case-001',
@@ -20,54 +21,14 @@ export const CASE_001: CaseDefinition = {
     'PLACEHOLDER — case intro paragraph two.',
     'PLACEHOLDER — case intro paragraph three.',
   ],
-  minPlayers: 3,
-  maxPlayers: 6,
+
+  // The slice is authored for exactly four players: four characters, four
+  // briefings. The 3–6 player range returns when the full cast is written.
+  minPlayers: 4,
+  maxPlayers: 4,
   estimatedMinutes: 45,
 
-  characters: [
-    {
-      id: 'c1',
-      name: 'The Host',
-      publicRole: 'PLACEHOLDER — public role line.',
-      privateBriefing: 'PLACEHOLDER — private briefing for The Host.',
-      privateObjectives: ['PLACEHOLDER objective A', 'PLACEHOLDER objective B'],
-    },
-    {
-      id: 'c2',
-      name: 'The Neighbour',
-      publicRole: 'PLACEHOLDER — public role line.',
-      privateBriefing: 'PLACEHOLDER — private briefing for The Neighbour.',
-      privateObjectives: ['PLACEHOLDER objective A', 'PLACEHOLDER objective B'],
-    },
-    {
-      id: 'c3',
-      name: 'The Executor',
-      publicRole: 'PLACEHOLDER — public role line.',
-      privateBriefing: 'PLACEHOLDER — private briefing for The Executor.',
-      privateObjectives: ['PLACEHOLDER objective A', 'PLACEHOLDER objective B'],
-    },
-    {
-      id: 'c4',
-      name: 'The Driver',
-      publicRole: 'PLACEHOLDER — public role line.',
-      privateBriefing: 'PLACEHOLDER — private briefing for The Driver.',
-      privateObjectives: ['PLACEHOLDER objective A', 'PLACEHOLDER objective B'],
-    },
-    {
-      id: 'c5',
-      name: 'The Archivist',
-      publicRole: 'PLACEHOLDER — public role line.',
-      privateBriefing: 'PLACEHOLDER — private briefing for The Archivist.',
-      privateObjectives: ['PLACEHOLDER objective A', 'PLACEHOLDER objective B'],
-    },
-    {
-      id: 'c6',
-      name: 'The Latecomer',
-      publicRole: 'PLACEHOLDER — public role line.',
-      privateBriefing: 'PLACEHOLDER — private briefing for The Latecomer.',
-      privateObjectives: ['PLACEHOLDER objective A', 'PLACEHOLDER objective B'],
-    },
-  ],
+  characters: CASE_001_CHARACTERS,
 
   evidence: [
     {
@@ -118,6 +79,8 @@ export const CASE_001: CaseDefinition = {
     },
   ],
 
-  culpritCharacterId: 'c3',
+  // Deliberately unauthored. The case's resolution is not part of this step,
+  // and guessing one would invent story that has not been approved.
+  culpritCharacterId: null,
   isPlaceholder: true,
 };

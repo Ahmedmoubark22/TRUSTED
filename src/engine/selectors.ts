@@ -1,4 +1,9 @@
-import type { CaseDefinition, CharacterDefinition, EvidenceDefinition } from '../content/types';
+import type {
+  CaseDefinition,
+  CharacterDefinition,
+  CharacterId,
+  EvidenceDefinition,
+} from '../content/types';
 import type { GameState, Player, PlayerId } from './types';
 
 /**
@@ -12,6 +17,43 @@ export function currentBriefingPlayer(state: GameState): Player | undefined {
 
 export function currentVoter(state: GameState): Player | undefined {
   return state.players[state.voteCursor];
+}
+
+/**
+ * The character dealt to whoever currently holds the device for briefing.
+ * Says nothing about whether that briefing may be *shown* — see
+ * `revealableCharacterId`.
+ */
+export function currentBriefingCharacterId(state: GameState): CharacterId | undefined {
+  const player = currentBriefingPlayer(state);
+  if (!player) return undefined;
+  return state.assignments[player.id];
+}
+
+/**
+ * The one character whose private briefing may be displayed right now, or
+ * `undefined` if none may be.
+ *
+ * This is the privacy gate, and it lives in the engine on purpose. The UI
+ * cannot decide to show a briefing; it can only ask which one it is allowed
+ * to show, and gets nothing back unless:
+ *
+ *   - the game is actually in PRIVATE_BRIEFINGS,
+ *   - the player at the device has explicitly opened the gate, and
+ *   - they have not yet reached the pass screen.
+ *
+ * Because it returns an id rather than content, no secret can leak through
+ * this call even if a caller ignores the result.
+ */
+export function revealableCharacterId(state: GameState): CharacterId | undefined {
+  if (state.phase !== 'PRIVATE_BRIEFINGS') return undefined;
+  if (state.briefingStep === 'LOCKED' || state.briefingStep === 'HANDOFF') return undefined;
+  return currentBriefingCharacterId(state);
+}
+
+/** The player who will hold the device next, if anyone. */
+export function nextBriefingPlayer(state: GameState): Player | undefined {
+  return state.players[state.briefingCursor + 1];
 }
 
 export function characterFor(
@@ -70,9 +112,13 @@ export function accusedPlayers(state: GameState): VoteTally[] {
 }
 
 /** The player who was actually dealt the culprit's character, if any. */
-export function culpritPlayer(state: GameState, def: CaseDefinition | undefined): Player | undefined {
-  if (!def) return undefined;
-  const entry = Object.entries(state.assignments).find(([, cid]) => cid === def.culpritCharacterId);
+export function culpritPlayer(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): Player | undefined {
+  if (!def?.culpritCharacterId) return undefined;
+  const culpritId = def.culpritCharacterId;
+  const entry = Object.entries(state.assignments).find(([, cid]) => cid === culpritId);
   if (!entry) return undefined;
   return playerById(state, entry[0]);
 }

@@ -1,34 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CASE_001 } from '../src/content/cases/case-001';
-import { getCase } from '../src/content/registry';
-import { createInitialState } from '../src/engine/initialState';
+import { MAX_PLAYERS, MIN_PLAYERS, createInitialState } from '../src/engine/initialState';
 import { reduce } from '../src/engine/reducer';
 import { accusedPlayers, allVotesCast, voteTally } from '../src/engine/selectors';
-import type { EngineContext, GameState } from '../src/engine/types';
-import type { GameEvent } from '../src/engine/events';
-
-/** Deterministic context: fixed clock, fixed RNG, real case content. */
-const ctx: EngineContext = {
-  now: () => 1_000,
-  random: () => 0.42,
-  getCase,
-};
-
-function run(state: GameState, ...events: GameEvent[]): GameState {
-  return events.reduce((s, e) => reduce(s, e, ctx), state);
-}
-
-function seatedGame(playerCount = 4): GameState {
-  return run(
-    createInitialState(),
-    { type: 'SELECT_CASE', caseId: CASE_001.id },
-    { type: 'INTRO_COMPLETE' },
-    { type: 'SET_PLAYER_COUNT', count: playerCount },
-    { type: 'CONFIRM_PLAYERS' },
-    { type: 'DEAL_CHARACTERS' },
-    { type: 'CONFIRM_ASSIGNMENTS' },
-  );
-}
+import type { GameState } from '../src/engine/types';
+import { briefAllPlayers, briefOnePlayer, ctx, run, seatedGame } from './helpers';
 
 describe('reduce', () => {
   it('starts at HOME with no case', () => {
@@ -48,48 +24,67 @@ describe('reduce', () => {
     expect(reduce(state, { type: 'START_VOTING' }, ctx)).toBe(state);
   });
 
-  it('deals one distinct character per player', () => {
-    const state = seatedGame(4);
+  it('seats the case default and deals one distinct character per player', () => {
+    const state = seatedGame();
+    expect(state.players).toHaveLength(4);
     const dealt = Object.values(state.assignments);
     expect(dealt).toHaveLength(4);
     expect(new Set(dealt).size).toBe(4);
     expect(state.phase).toBe('PRIVATE_BRIEFINGS');
+    expect(state.briefingStep).toBe('LOCKED');
   });
 
-  it('refuses to seat more players than the case supports', () => {
+  it('refuses to start a case with a player count it was not written for', () => {
     let state = run(
       createInitialState(),
       { type: 'SELECT_CASE', caseId: CASE_001.id },
       { type: 'INTRO_COMPLETE' },
-      { type: 'SET_PLAYER_COUNT', count: 99 },
     );
-    expect(state.players.length).toBe(CASE_001.maxPlayers);
+    expect(state.players).toHaveLength(CASE_001.minPlayers);
+
+    // The engine clamps to the product-wide range...
+    state = run(state, { type: 'SET_PLAYER_COUNT', count: 99 });
+    expect(state.players).toHaveLength(MAX_PLAYERS);
+    // ...but the case decides what it can actually be played with.
+    expect(reduce(state, { type: 'CONFIRM_PLAYERS' }, ctx)).toBe(state);
 
     state = run(state, { type: 'SET_PLAYER_COUNT', count: 1 });
-    expect(state.players.length).toBe(3);
+    expect(state.players).toHaveLength(MIN_PLAYERS);
+    expect(reduce(state, { type: 'CONFIRM_PLAYERS' }, ctx)).toBe(state);
+
+    state = run(state, { type: 'SET_PLAYER_COUNT', count: 4 }, { type: 'CONFIRM_PLAYERS' });
+    expect(state.phase).toBe('CHARACTER_ASSIGNMENT');
   });
 
-  it('walks the briefing cursor seat by seat, then opens the table', () => {
-    let state = seatedGame(4);
+  it('walks the briefing seat by seat, then opens the table', () => {
+    let state = seatedGame();
     expect(state.briefingCursor).toBe(0);
-    state = run(state, { type: 'ADVANCE_BRIEFING' }, { type: 'ADVANCE_BRIEFING' });
+
+    state = briefOnePlayer(state);
     expect(state.phase).toBe('PRIVATE_BRIEFINGS');
+    expect(state.briefingCursor).toBe(1);
+
+    state = briefOnePlayer(state);
     expect(state.briefingCursor).toBe(2);
-    state = run(state, { type: 'ADVANCE_BRIEFING' }, { type: 'ADVANCE_BRIEFING' });
+
+    state = briefOnePlayer(briefOnePlayer(state));
     expect(state.phase).toBe('TABLE');
     expect(state.briefingCursor).toBe(0);
   });
 
   it('honours evidence prerequisites', () => {
-    let state = seatedGame(4);
-    state = run(state, ...Array.from({ length: 4 }, () => ({ type: 'ADVANCE_BRIEFING' }) as const));
+    let state = briefAllPlayers(seatedGame());
     state = run(state, { type: 'OPEN_EVIDENCE' });
 
     // e3 requires e1.
     const blocked = reduce(state, { type: 'REVEAL_EVIDENCE', evidenceId: 'e3' }, ctx);
     expect(blocked.revealedEvidence).toEqual([]);
 
-    state = run(state, { type: 'REVEAL_EVIDENCE', evidenceId: 'e1' }, { type: 'REVEAL_EVIDENCE', evidenceId: 'e3' });
+    state = run(
+      state,
+      { type: 'REVEAL_EVIDENCE', evidenceId: 'e1' },
+      { type: 'REVEAL_EVIDENCE', evidenceId: 'e3' },
+    );
     expect(state.revealedEvidence).toEqual(['e1', 'e3']);
 
     // Revealing twice does nothing.
@@ -97,13 +92,8 @@ describe('reduce', () => {
   });
 
   it('collects votes in seat order and only from the player whose turn it is', () => {
-    let state = seatedGame(4);
-    state = run(
-      state,
-      ...Array.from({ length: 4 }, () => ({ type: 'ADVANCE_BRIEFING' }) as const),
-      { type: 'READY_TO_DECIDE' },
-      { type: 'START_VOTING' },
-    );
+    let state = briefAllPlayers(seatedGame());
+    state = run(state, { type: 'READY_TO_DECIDE' }, { type: 'START_VOTING' });
     expect(state.phase).toBe('VOTING');
 
     const [p1, p2, p3, p4] = state.players;
@@ -129,7 +119,7 @@ describe('reduce', () => {
   });
 
   it('steps through every truth beat before closing the case', () => {
-    let state: GameState = { ...seatedGame(4), phase: 'VOTE_REVEAL' };
+    let state: GameState = { ...seatedGame(), phase: 'VOTE_REVEAL' };
     state = run(state, { type: 'SHOW_TRUTH' });
     expect(state.phase).toBe('TRUTH_REVEAL');
 
@@ -142,8 +132,7 @@ describe('reduce', () => {
   });
 
   it('can be played end to end from HOME to CASE_COMPLETE', () => {
-    let state = seatedGame(4);
-    state = run(state, ...Array.from({ length: 4 }, () => ({ type: 'ADVANCE_BRIEFING' }) as const));
+    let state = briefAllPlayers(seatedGame());
     expect(state.phase).toBe('TABLE');
 
     state = run(
