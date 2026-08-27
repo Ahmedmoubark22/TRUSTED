@@ -1,5 +1,6 @@
 export * from './phases';
 export * from './briefing';
+export * from './evidence';
 export * from './types';
 export * from './events';
 export * from './initialState';

@@ -12,7 +12,7 @@ export interface Player {
 }
 
 /** Bumped whenever the persisted shape of GameState changes. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * The one authoritative game state. Every view reads from this; no view keeps
@@ -39,8 +39,18 @@ export interface GameState {
    * The gate uses it to explain itself instead of silently reopening.
    */
   briefingResumed: boolean;
-  /** Evidence unlocked by the table, in reveal order. */
+  /**
+   * Evidence the table has put in front of itself, in the order it landed.
+   * This list *is* the table. Anything not in it has not been reached, and
+   * the app has no business naming it.
+   */
   revealedEvidence: EvidenceId[];
+  /**
+   * How many fragments of the object currently in front of the table have
+   * been uncovered. `0` means sealed. Which object that is comes from the
+   * `requires` chain, so this never has to name one.
+   */
+  evidenceRevealed: number;
   /** Index into `players` for the pass-and-play voting handoff. */
   voteCursor: number;
   /** voterId -> accused playerId. */

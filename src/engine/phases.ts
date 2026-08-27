@@ -43,7 +43,7 @@ export const PHASE_META: Record<GamePhase, PhaseMeta> = {
   CHARACTER_ASSIGNMENT: { title: 'Roles', hint: 'Roles are being dealt.', isPrivate: false },
   PRIVATE_BRIEFINGS: { title: 'Briefing', hint: 'Pass the device. One player only.', isPrivate: true },
   TABLE: { title: 'The Table', hint: 'Investigate together.', isPrivate: false },
-  EVIDENCE: { title: 'Evidence', hint: 'What the room can prove.', isPrivate: false },
+  EVIDENCE: { title: 'Evidence', hint: 'Everyone may look.', isPrivate: false },
   DISCUSSION: { title: 'Discussion', hint: 'Talk. Out loud. To each other.', isPrivate: false },
   DECISION_READY: { title: 'Ready?', hint: 'The vote cannot be undone.', isPrivate: false },
   VOTING: { title: 'Vote', hint: 'Pass the device. Vote in private.', isPrivate: true },
@@ -62,8 +62,13 @@ export const PHASE_TRANSITIONS: Record<GamePhase, readonly GamePhase[]> = {
   CHARACTER_ASSIGNMENT: ['PRIVATE_BRIEFINGS', 'PLAYER_SETUP'],
   PRIVATE_BRIEFINGS: ['TABLE'],
   TABLE: ['EVIDENCE', 'DISCUSSION', 'DECISION_READY'],
-  EVIDENCE: ['TABLE'],
-  DISCUSSION: ['TABLE', 'DECISION_READY'],
+  // Placing an object is what starts people talking, so EVIDENCE leads
+  // straight into DISCUSSION rather than back out to the table.
+  EVIDENCE: ['TABLE', 'DISCUSSION'],
+  // ...and "we're ready" either brings out the next object or, when there is
+  // none left, ends the investigation. A discussion only moves forward; the
+  // table is reached by backing out of an object, or from the decision.
+  DISCUSSION: ['EVIDENCE', 'DECISION_READY'],
   DECISION_READY: ['VOTING', 'TABLE'],
   VOTING: ['VOTE_REVEAL'],
   VOTE_REVEAL: ['TRUTH_REVEAL'],

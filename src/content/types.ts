@@ -46,21 +46,56 @@ export interface PrivateBriefing {
   goal: string;
 }
 
-/** A piece of evidence the table can reveal during the investigation. */
+/**
+ * What kind of object a piece of evidence physically is.
+ *
+ * This is the only thing that drives how evidence is presented. There is one
+ * evidence viewer, not one screen per object — a new type is a new stylesheet
+ * rule and a new affordance label, never a new component.
+ */
+export const EVIDENCE_TYPES = ['invitation', 'photograph', 'letter'] as const;
+
+export type EvidenceType = (typeof EVIDENCE_TYPES)[number];
+
+/**
+ * One uncovering of an object.
+ *
+ * Objects are not read all at once. A card gets turned over; a letter is read
+ * down the page. Each fragment is one tap, so the table sees the object the
+ * way a hand would actually work through it.
+ */
+export interface EvidenceFragment {
+  /** Where on the object this is — "The back of the card", "Lower down". */
+  caption: string;
+  lines: string[];
+}
+
+/**
+ * A piece of evidence the table can uncover and place in front of everyone.
+ *
+ * Public by design, exactly like `CharacterDefinition`. Evidence is what the
+ * whole room is allowed to know; anything only one player knows belongs in
+ * `PrivateBriefing` and must not be written here.
+ */
 export interface EvidenceDefinition {
   id: EvidenceId;
+  type: EvidenceType;
   title: string;
-  /** Short line shown on the locked card. */
-  teaser: string;
-  /** Full text shown once revealed. */
-  body: string;
-  /** Optional asset under /public/assets. */
+  /** How the object presents itself before it is opened. No contents. */
+  description: string;
+  /** The object's contents, uncovered one fragment at a time. */
+  fragments: EvidenceFragment[];
+  /** Optional asset under /public/assets. Absent means the CSS placeholder. */
   imageSrc?: string;
   /**
-   * Evidence that must already be revealed before this becomes available.
-   * Empty means "available from the start".
+   * Evidence that must already be on the table before this becomes available.
+   * Empty means "available from the start". This chain *is* the authored
+   * progression — the engine reads the order from here, not from a hard-coded
+   * list somewhere in the app.
    */
   requires: EvidenceId[];
+  /** The question left hanging once this is on the table. */
+  discussionPrompt?: string;
 }
 
 /** One step of the layered truth reveal. */

@@ -67,8 +67,15 @@ h3 {
 
 /* ------------------------------------------------------------------ shell */
 .app {
-  /* dvh so the iOS URL bar collapsing does not clip the footer. */
-  min-height: 100dvh;
+  /*
+   * Exactly one viewport tall, not "at least". The shell is a phone screen,
+   * so long content must be absorbed inside it rather than pushing the page
+   * taller — otherwise the primary action slides off the bottom and the
+   * player has to scroll to find the only control on the screen.
+   *
+   * dvh so the iOS URL bar collapsing does not clip the footer.
+   */
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   margin-inline: auto;
@@ -98,17 +105,20 @@ h3 {
 
 .app__main {
   flex: 1;
+  /* Without this a tall child sets the floor and the shell grows anyway. */
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--space-2) var(--layout-gutter) calc(var(--safe-bottom) + var(--space-6));
+  padding: var(--space-2) var(--layout-gutter) calc(var(--safe-bottom) + var(--space-5));
 }
 
 /* ----------------------------------------------------------------- screen */
 .screen {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
   animation: screen-in var(--duration-base) var(--ease-entrance) both;
 }
 
@@ -133,18 +143,34 @@ h3 {
   color: var(--color-text-muted);
 }
 
+/*
+ * The only part of a screen that ever scrolls.
+ *
+ * Content that outgrows the phone is absorbed here instead of pushing the
+ * action area off the bottom, so the primary control stays put and reachable
+ * on any device. Authored content is still expected to fit without scrolling
+ * — this is the floor, not the plan.
+ */
 .screen__body {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Present but quiet. Touch devices overlay it; desktop gets a hairline
+     rather than a system scrollbar cutting into the layout. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
+/* Pinned below the body, never scrolled away from. */
 .screen__actions {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding-top: var(--space-4);
+  padding-top: var(--space-3);
 }
 
 @keyframes screen-in {
@@ -280,17 +306,24 @@ h3 {
 }
 
 /* --------------------------------------------------------- private briefing */
+/*
+ * Spacing here is load-bearing: by the final step every section is on screen
+ * at once, and the longest briefing has to fit a 375x812 phone without the
+ * player scrolling to find the button. The rhythm is tightened rather than
+ * the type — 18px lines stay 18px lines, because this is the one screen a
+ * player has to read carefully and only gets once.
+ */
 .briefing {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  padding-top: var(--space-2);
+  gap: var(--space-5);
 }
 
 .briefing__section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  /* Label sits close to what it labels; the air goes between sections. */
+  gap: var(--space-2);
   /* Short and non-blocking — the next tap is live immediately. */
   animation: section-in var(--duration-fast) var(--ease-entrance) both;
 }
@@ -312,7 +345,7 @@ h3 {
 .briefing__list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -344,6 +377,222 @@ h3 {
     opacity: 1;
     transform: none;
   }
+}
+
+/* ---------------------------------------------------------------- evidence */
+/* One object, dominating the screen. The object is the tap target — there is
+   no separate control to aim at. */
+.evidence {
+  display: flex;
+  flex: 1;
+  animation: evidence-in var(--duration-base) var(--ease-entrance) both;
+}
+
+.evidence__object {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  /* Sized so a sealed object clears a 375x812 phone without scrolling. */
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-lift);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  /* Immediate: the press reads before anything else runs. */
+  transition: transform var(--duration-instant) var(--ease-standard);
+}
+
+.evidence__object:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.evidence__object:disabled {
+  cursor: default;
+}
+
+/* The artwork slot. A tinted plate stands in until real assets exist; the
+   object still has physical presence without them. */
+.evidence__plate {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(120% 90% at 30% 15%, rgba(201, 162, 74, 0.16), transparent 60%),
+    var(--color-surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.evidence__image {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.evidence__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+}
+
+.evidence__description,
+.evidence__caption {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.evidence__cue {
+  display: block;
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.evidence__reading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-top: var(--space-2);
+}
+
+.evidence__fragment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  animation: section-in var(--duration-fast) var(--ease-entrance) both;
+}
+
+.evidence__caption {
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.evidence__line {
+  display: block;
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  /* Objects are read, not skimmed. */
+  text-wrap: pretty;
+}
+
+/* Type decides presentation — this is the whole of the per-type branching. */
+.evidence--photograph .evidence__plate {
+  aspect-ratio: 1 / 1;
+  background:
+    linear-gradient(160deg, rgba(236, 231, 221, 0.1), transparent 55%),
+    var(--color-surface-sunken);
+}
+
+.evidence--letter .evidence__object {
+  background:
+    linear-gradient(var(--color-surface-raised), var(--color-surface));
+  font-family: var(--font-display);
+}
+
+.evidence--letter .evidence__plate {
+  aspect-ratio: 5 / 2;
+}
+
+/* The letter is incomplete, and looks it. */
+.evidence--letter .evidence__reading {
+  border-bottom: 1px dashed var(--color-border-strong);
+  padding-bottom: var(--space-5);
+}
+
+@keyframes evidence-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------------- table */
+.table__empty {
+  margin: var(--space-7) 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-text-faint);
+}
+
+.table__objects {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Settled: placed objects sit flatter than the one being examined. */
+.table__object {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-accent-dim);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  animation: settle var(--duration-base) var(--ease-entrance) both;
+}
+
+.table__object-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.table__object-note {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* -------------------------------------------------------------- discussion */
+/* Deliberately close to empty. The talking is not happening on the screen. */
+.discuss {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-7) 0;
+}
+
+.discuss__prompt {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+  text-align: center;
+  text-wrap: balance;
+  color: var(--color-text-muted);
+  animation: section-in var(--duration-base) var(--ease-entrance) both;
 }
 
 /* -------------------------------------------------------------- dev tools */

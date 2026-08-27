@@ -4,7 +4,15 @@ import { MAX_PLAYERS, MIN_PLAYERS, createInitialState } from '../src/engine/init
 import { reduce } from '../src/engine/reducer';
 import { accusedPlayers, allVotesCast, voteTally } from '../src/engine/selectors';
 import type { GameState } from '../src/engine/types';
-import { briefAllPlayers, briefOnePlayer, ctx, run, seatedGame } from './helpers';
+import {
+  briefAllPlayers,
+  briefOnePlayer,
+  ctx,
+  placeNextEvidence,
+  playAllEvidence,
+  run,
+  seatedGame,
+} from './helpers';
 
 describe('reduce', () => {
   it('starts at HOME with no case', () => {
@@ -76,19 +84,20 @@ describe('reduce', () => {
     let state = briefAllPlayers(seatedGame());
     state = run(state, { type: 'OPEN_EVIDENCE' });
 
-    // e3 requires e1.
-    const blocked = reduce(state, { type: 'REVEAL_EVIDENCE', evidenceId: 'e3' }, ctx);
-    expect(blocked.revealedEvidence).toEqual([]);
+    // e02 requires e01, so nothing about it can be touched yet.
+    expect(reduce(state, { type: 'INSPECT_EVIDENCE', evidenceId: 'e02' }, ctx)).toBe(state);
+    expect(reduce(state, { type: 'PLACE_EVIDENCE', evidenceId: 'e02' }, ctx)).toBe(state);
+    expect(state.revealedEvidence).toEqual([]);
 
-    state = run(
-      state,
-      { type: 'REVEAL_EVIDENCE', evidenceId: 'e1' },
-      { type: 'REVEAL_EVIDENCE', evidenceId: 'e3' },
-    );
-    expect(state.revealedEvidence).toEqual(['e1', 'e3']);
+    state = run(placeNextEvidence(state), { type: 'DISCUSSION_COMPLETE' });
+    expect(state.revealedEvidence).toEqual(['e01']);
 
-    // Revealing twice does nothing.
-    expect(reduce(state, { type: 'REVEAL_EVIDENCE', evidenceId: 'e1' }, ctx)).toBe(state);
+    // With e01 down, e02 is the object in front of the table.
+    state = placeNextEvidence(state);
+    expect(state.revealedEvidence).toEqual(['e01', 'e02']);
+
+    // And e01 cannot be placed a second time.
+    expect(reduce(state, { type: 'PLACE_EVIDENCE', evidenceId: 'e01' }, ctx)).toBe(state);
   });
 
   it('collects votes in seat order and only from the player whose turn it is', () => {
@@ -135,15 +144,11 @@ describe('reduce', () => {
     let state = briefAllPlayers(seatedGame());
     expect(state.phase).toBe('TABLE');
 
-    state = run(
-      state,
-      { type: 'OPEN_EVIDENCE' },
-      { type: 'REVEAL_EVIDENCE', evidenceId: 'e1' },
-      { type: 'CLOSE_EVIDENCE' },
-      { type: 'OPEN_DISCUSSION' },
-      { type: 'READY_TO_DECIDE' },
-      { type: 'START_VOTING' },
-    );
+    // Every object, each followed by its discussion. Ends at the decision.
+    state = playAllEvidence(state);
+    expect(state.phase).toBe('DECISION_READY');
+
+    state = run(state, { type: 'START_VOTING' });
 
     for (const player of state.players) {
       const accused = state.players.find((p) => p.id !== player.id);

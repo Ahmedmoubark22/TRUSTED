@@ -41,9 +41,15 @@ export function createDevGame(phase: GamePhase, playerCount = DEV_PLAYERS): Game
     state.assignments = assignments;
   }
 
-  // At the table and beyond, assume the room has opened the starting evidence.
-  if (phaseIsAtOrAfter(phase, 'TABLE')) {
-    state.revealedEvidence = CASE_001.evidence.filter((e) => e.requires.length === 0).map((e) => e.id);
+  // Evidence, seeded to whatever each phase plausibly arrived with. TABLE and
+  // EVIDENCE start empty so the first object is genuinely still sealed;
+  // DISCUSSION needs one placed object to be talking about; by the decision
+  // there is nothing left to bring out.
+  if (phase === 'DISCUSSION') {
+    const first = CASE_001.evidence[0];
+    if (first) state.revealedEvidence = [first.id];
+  } else if (phaseIsAtOrAfter(phase, 'DECISION_READY')) {
+    state.revealedEvidence = CASE_001.evidence.map((e) => e.id);
   }
 
   // From the vote reveal onward there must be a completed ballot.

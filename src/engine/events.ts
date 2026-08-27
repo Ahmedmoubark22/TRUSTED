@@ -38,11 +38,24 @@ export type GameEvent =
   | { type: 'ADVANCE_BRIEFING' }
 
   // TABLE / EVIDENCE / DISCUSSION
+  /** Bring the next object out. The engine decides which one that is. */
   | { type: 'OPEN_EVIDENCE' }
-  | { type: 'REVEAL_EVIDENCE'; evidenceId: EvidenceId }
+  /**
+   * Uncover the next fragment of the object in front of the table. Carries
+   * the id so a stale tap cannot open whatever happens to be next.
+   */
+  | { type: 'INSPECT_EVIDENCE'; evidenceId: EvidenceId }
+  /** "PUT IT ON THE TABLE" — the object becomes shared, and talk starts. */
+  | { type: 'PLACE_EVIDENCE'; evidenceId: EvidenceId }
   | { type: 'CLOSE_EVIDENCE' }
   | { type: 'OPEN_DISCUSSION' }
-  | { type: 'CLOSE_DISCUSSION' }
+  /**
+   * "WE'RE READY" — the only way out of a discussion, and on to the next
+   * object or to the decision if none remain. There is deliberately no
+   * "back to the table" from here: the table is where objects are reviewed,
+   * and a discussion ends by moving forward.
+   */
+  | { type: 'DISCUSSION_COMPLETE' }
   | { type: 'READY_TO_DECIDE' }
   | { type: 'RETURN_TO_TABLE' }
 

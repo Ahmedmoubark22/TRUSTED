@@ -43,6 +43,7 @@ export function isGameState(value: unknown): value is GameState {
     isBriefingStep(value.briefingStep) &&
     typeof value.briefingResumed === 'boolean' &&
     isStringArray(value.revealedEvidence) &&
+    typeof value.evidenceRevealed === 'number' &&
     typeof value.voteCursor === 'number' &&
     isStringRecord(value.votes) &&
     typeof value.revealBeat === 'number' &&

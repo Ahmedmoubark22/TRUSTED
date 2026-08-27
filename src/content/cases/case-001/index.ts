@@ -1,16 +1,17 @@
 /**
  * Case 001 — The Last Guest.
  *
- * Four-player vertical slice. The characters and their private briefings are
- * approved prototype content (see `./characters.ts` and `./briefings.ts`).
+ * Four-player vertical slice. The characters, their private briefings and the
+ * first three objects are approved prototype content (see `./characters.ts`,
+ * `./briefings.ts` and `./evidence.ts`).
  *
- * Everything else in this file — intro, evidence, truth beats, resolution —
- * is still PLACEHOLDER scaffolding, kept only so the later phases have
- * something structurally valid to render. It is replaced in the evidence and
- * reveal steps.
+ * What is left in this file — intro, truth beats, resolution — is still
+ * PLACEHOLDER scaffolding, kept only so the later phases have something
+ * structurally valid to render. It is replaced in the reveal step.
  */
 import type { CaseDefinition } from '../../types';
 import { CASE_001_CHARACTERS } from './characters';
+import { CASE_001_EVIDENCE } from './evidence';
 
 export const CASE_001: CaseDefinition = {
   id: 'case-001',
@@ -30,36 +31,7 @@ export const CASE_001: CaseDefinition = {
 
   characters: CASE_001_CHARACTERS,
 
-  evidence: [
-    {
-      id: 'e1',
-      title: 'PLACEHOLDER — Evidence One',
-      teaser: 'PLACEHOLDER — locked teaser line.',
-      body: 'PLACEHOLDER — revealed evidence body.',
-      requires: [],
-    },
-    {
-      id: 'e2',
-      title: 'PLACEHOLDER — Evidence Two',
-      teaser: 'PLACEHOLDER — locked teaser line.',
-      body: 'PLACEHOLDER — revealed evidence body.',
-      requires: [],
-    },
-    {
-      id: 'e3',
-      title: 'PLACEHOLDER — Evidence Three',
-      teaser: 'PLACEHOLDER — locked teaser line.',
-      body: 'PLACEHOLDER — revealed evidence body.',
-      requires: ['e1'],
-    },
-    {
-      id: 'e4',
-      title: 'PLACEHOLDER — Evidence Four',
-      teaser: 'PLACEHOLDER — locked teaser line.',
-      body: 'PLACEHOLDER — revealed evidence body.',
-      requires: ['e2'],
-    },
-  ],
+  evidence: CASE_001_EVIDENCE,
 
   truthBeats: [
     {

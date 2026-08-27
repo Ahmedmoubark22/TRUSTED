@@ -1,5 +1,7 @@
+import type { EvidenceDefinition } from '../content/types';
 import type { GameEvent } from './events';
 import { nextBriefingStep } from './briefing';
+import { SEALED, isFullyUncovered, nextEvidenceId } from './evidence';
 import { canTransition, type GamePhase } from './phases';
 import { currentBriefingCharacterId } from './selectors';
 import { MAX_PLAYERS, MIN_PLAYERS, createInitialState, makePlayer, makePlayers } from './initialState';
@@ -146,25 +148,47 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
       return go(state, 'TABLE', ctx, { ...CLOSED_BRIEFING, briefingCursor: 0 });
     }
 
-    case 'OPEN_EVIDENCE':
-      return go(state, 'EVIDENCE', ctx);
+    case 'OPEN_EVIDENCE': {
+      // Nothing left to bring out means nothing to open.
+      if (!activeEvidence(state, ctx)) return state;
+      return go(state, 'EVIDENCE', ctx, { evidenceRevealed: SEALED });
+    }
 
-    case 'REVEAL_EVIDENCE': {
+    case 'INSPECT_EVIDENCE': {
       if (state.phase !== 'EVIDENCE') return state;
-      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
-      const item = def?.evidence.find((e) => e.id === event.evidenceId);
-      if (!item) return state;
-      if (state.revealedEvidence.includes(item.id)) return state;
-      // Content decides what is true, including what must come first.
-      const unlocked = item.requires.every((id) => state.revealedEvidence.includes(id));
-      if (!unlocked) return state;
-      return touch({ ...state, revealedEvidence: [...state.revealedEvidence, item.id] }, ctx);
+      const item = activeEvidence(state, ctx);
+      // Only the object actually in front of the table can be touched. A tap
+      // naming anything else — stale, guessed, or replayed — does nothing.
+      if (!item || item.id !== event.evidenceId) return state;
+      if (isFullyUncovered(item, state.evidenceRevealed)) return state;
+      // Uncovering is not placing. The table state is untouched here.
+      return touch({ ...state, evidenceRevealed: state.evidenceRevealed + 1 }, ctx);
+    }
+
+    case 'PLACE_EVIDENCE': {
+      if (state.phase !== 'EVIDENCE') return state;
+      const item = activeEvidence(state, ctx);
+      if (!item || item.id !== event.evidenceId) return state;
+      // An object nobody has read cannot be put in front of everyone.
+      if (!isFullyUncovered(item, state.evidenceRevealed)) return state;
+      return go(state, 'DISCUSSION', ctx, {
+        revealedEvidence: [...state.revealedEvidence, item.id],
+        evidenceRevealed: SEALED,
+      });
+    }
+
+    case 'DISCUSSION_COMPLETE': {
+      if (state.phase !== 'DISCUSSION') return state;
+      // The group decides when talk is over; what follows is not their call.
+      if (!activeEvidence(state, ctx)) return go(state, 'DECISION_READY', ctx);
+      return go(state, 'EVIDENCE', ctx, { evidenceRevealed: SEALED });
     }
 
     case 'CLOSE_EVIDENCE':
-    case 'CLOSE_DISCUSSION':
     case 'RETURN_TO_TABLE':
-      return go(state, 'TABLE', ctx);
+      // Backing out reseals whatever was half-open, so the object is picked up
+      // fresh rather than resumed mid-read.
+      return go(state, 'TABLE', ctx, { evidenceRevealed: SEALED });
 
     case 'OPEN_DISCUSSION':
       return go(state, 'DISCUSSION', ctx);
@@ -235,6 +259,20 @@ function go(
 
 function touch(state: GameState, ctx: EngineContext): GameState {
   return { ...state, updatedAt: ctx.now() };
+}
+
+/**
+ * The object the table is working on, straight from the authored chain.
+ *
+ * Deliberately derived rather than stored: there is no field that could drift
+ * out of step with what has actually been placed, and no way to point the
+ * table at an object the case never made available.
+ */
+function activeEvidence(state: GameState, ctx: EngineContext): EvidenceDefinition | undefined {
+  const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+  if (!def) return undefined;
+  const id = nextEvidenceId(def.evidence, state.revealedEvidence);
+  return def.evidence.find((e) => e.id === id);
 }
 
 function reseat(players: GameState['players']): GameState['players'] {

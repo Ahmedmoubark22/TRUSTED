@@ -1,30 +1,35 @@
-import { Button, Card, Screen } from '../../components';
-import { useDispatch } from '../../app/hooks';
+import { Button, Screen } from '../../components';
+import { lastPlacedEvidence } from '../../engine/selectors';
+import { useCaseDefinition, useDispatch, useGameState } from '../../app/hooks';
 
+/**
+ * The quiet screen.
+ *
+ * Discussion is the part of TRUSTED that happens between people, so the device
+ * gets out of the way: the object that just landed, the question it raised,
+ * and one way out. No chat, no timer, no turn order, no prompting — the group
+ * decides when it is done, and says so.
+ */
 export function DiscussionView() {
+  const state = useGameState();
   const dispatch = useDispatch();
+  const def = useCaseDefinition();
+
+  const latest = lastPlacedEvidence(state, def);
 
   return (
     <Screen
-      kicker="Out loud"
-      title="Discussion"
-      lede="The device stays face up. This part happens between people."
+      kicker={latest ? latest.title : undefined}
+      title="Discuss"
       actions={
-        <>
-          <Button variant="primary" onClick={() => dispatch({ type: 'READY_TO_DECIDE' })}>
-            We are ready to vote
-          </Button>
-          <Button variant="ghost" onClick={() => dispatch({ type: 'CLOSE_DISCUSSION' })}>
-            Back to the table
-          </Button>
-        </>
+        <Button variant="primary" onClick={() => dispatch({ type: 'DISCUSSION_COMPLETE' })}>
+          We&rsquo;re ready
+        </Button>
       }
     >
-      <Card title="Suggested order" muted>
-        <p className="card__meta">
-          Each player accounts for themselves, then answers one question from the table.
-        </p>
-      </Card>
+      <div className="discuss">
+        <p className="discuss__prompt">{latest?.discussionPrompt ?? 'What do you think?'}</p>
+      </div>
     </Screen>
   );
 }

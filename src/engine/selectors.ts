@@ -3,7 +3,16 @@ import type {
   CharacterDefinition,
   CharacterId,
   EvidenceDefinition,
+  EvidenceFragment,
+  EvidenceId,
 } from '../content/types';
+import {
+  SEALED,
+  isFullyUncovered,
+  nextEvidenceId,
+  visibleFragmentCount,
+  type EvidenceState,
+} from './evidence';
 import type { GameState, Player, PlayerId } from './types';
 
 /**
@@ -70,20 +79,107 @@ export function playerById(state: GameState, playerId: PlayerId): Player | undef
   return state.players.find((p) => p.id === playerId);
 }
 
-export interface EvidenceCard {
-  definition: EvidenceDefinition;
-  isRevealed: boolean;
-  /** False while its prerequisites are still hidden. */
-  isUnlocked: boolean;
+/* ------------------------------------------------------------------ evidence */
+
+/**
+ * Whether the case still has an object the table has not reached.
+ *
+ * A boolean, on purpose. The table screen and the discussion screen both need
+ * to know whether there is more to come, and neither of them is allowed to
+ * know *what*. Returning a count would put "3" on a screen and tell the room
+ * how much is still hidden; returning a definition would put its title one
+ * property access from being rendered.
+ */
+export function hasUnplacedEvidence(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): boolean {
+  if (!def) return false;
+  return nextEvidenceId(def.evidence, state.revealedEvidence) !== undefined;
 }
 
-export function evidenceCards(state: GameState, def: CaseDefinition | undefined): EvidenceCard[] {
+/**
+ * The one object that may be shown right now, or undefined.
+ *
+ * This is the evidence counterpart of `revealableCharacterId`, and it exists
+ * for the same reason: the UI cannot decide to show an object, it can only ask
+ * which one it is allowed to show. Outside the EVIDENCE phase the answer is
+ * always "none", so no view — however it is rendered — can paint an object the
+ * table has not been handed.
+ */
+export function inspectableEvidence(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): EvidenceDefinition | undefined {
+  if (state.phase !== 'EVIDENCE') return undefined;
+  if (!def) return undefined;
+  const id = nextEvidenceId(def.evidence, state.revealedEvidence);
+  return def.evidence.find((e) => e.id === id);
+}
+
+/**
+ * The fragments of the active object the table has actually uncovered.
+ *
+ * Sliced, not filtered-and-hidden. What has not been uncovered never reaches
+ * the component, so it cannot end up in the DOM under a class name.
+ */
+export function visibleFragments(
+  state: GameState,
+  item: EvidenceDefinition | undefined,
+): EvidenceFragment[] {
+  if (!item) return [];
+  return item.fragments.slice(0, visibleFragmentCount(item, state.evidenceRevealed));
+}
+
+/** True once the whole of the active object has been read. */
+export function isEvidenceFullyInspected(
+  state: GameState,
+  item: EvidenceDefinition | undefined,
+): boolean {
+  if (!item) return false;
+  return isFullyUncovered(item, state.evidenceRevealed);
+}
+
+/**
+ * What is on the table, in the order it was placed.
+ *
+ * Only placed objects. This is the whole of what the shared view is allowed to
+ * show, and it is built from the placed list rather than filtered out of the
+ * full one — there is no complete list in scope to leak from.
+ */
+export function tableEvidence(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): EvidenceDefinition[] {
   if (!def) return [];
-  return def.evidence.map((definition) => ({
-    definition,
-    isRevealed: state.revealedEvidence.includes(definition.id),
-    isUnlocked: definition.requires.every((id) => state.revealedEvidence.includes(id)),
-  }));
+  return state.revealedEvidence
+    .map((id) => def.evidence.find((e) => e.id === id))
+    .filter((e): e is EvidenceDefinition => e !== undefined);
+}
+
+/** The object that started the conversation now happening. */
+export function lastPlacedEvidence(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): EvidenceDefinition | undefined {
+  return tableEvidence(state, def).at(-1);
+}
+
+/**
+ * Where a given object stands. The full conceptual model, derived on demand.
+ *
+ * Takes an id and returns a state — never contents — so asking about an object
+ * the table has not reached tells you `UNDISCOVERED` and nothing else.
+ */
+export function evidenceStateOf(
+  state: GameState,
+  def: CaseDefinition | undefined,
+  evidenceId: EvidenceId,
+): EvidenceState {
+  if (state.revealedEvidence.includes(evidenceId)) return 'ON_TABLE';
+  if (!def) return 'UNDISCOVERED';
+  if (nextEvidenceId(def.evidence, state.revealedEvidence) !== evidenceId) return 'UNDISCOVERED';
+  return state.evidenceRevealed > SEALED && state.phase === 'EVIDENCE' ? 'INSPECTING' : 'AVAILABLE';
 }
 
 export interface VoteTally {
