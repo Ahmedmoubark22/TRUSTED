@@ -1,6 +1,14 @@
-import { Button, Card, Screen } from '../../components';
+import { Button, Screen } from '../../components';
+import { DECISION_QUESTION } from '../../engine/voting';
 import { useDispatch, useGameState } from '../../app/hooks';
 
+/**
+ * The point of no return.
+ *
+ * It states the question the table is about to answer, so nobody walks into a
+ * private vote unsure what they are being asked. No timer: the group arrives
+ * here by saying it is ready, and leaves by saying it again.
+ */
 export function DecisionReadyView() {
   const state = useGameState();
   const dispatch = useDispatch();
@@ -8,12 +16,11 @@ export function DecisionReadyView() {
   return (
     <Screen
       kicker="Point of no return"
-      title="Ready to decide"
-      lede="Voting is private and sequential. Once it starts, the discussion is over."
+      title="Ready to decide?"
       actions={
         <>
           <Button variant="primary" onClick={() => dispatch({ type: 'START_VOTING' })}>
-            Start the vote
+            Vote
           </Button>
           <Button variant="ghost" onClick={() => dispatch({ type: 'RETURN_TO_TABLE' })}>
             Not yet — back to the table
@@ -21,13 +28,13 @@ export function DecisionReadyView() {
         </>
       }
     >
-      <Card title="How it works" muted>
-        <p className="card__meta">
-          The device passes seat by seat. Each player names one person, alone, and hands it on.
-          Nobody sees a vote until everyone has cast one.
+      <div className="decision">
+        <p className="decision__question">{DECISION_QUESTION}</p>
+        <p className="decision__note">
+          The device passes seat by seat. Each of you names one person, alone, and hands it on.
+          Nothing is shown until all {state.players.length} votes are in.
         </p>
-      </Card>
-      <Card title={`${state.players.length} votes to collect`} muted />
+      </div>
     </Screen>
   );
 }

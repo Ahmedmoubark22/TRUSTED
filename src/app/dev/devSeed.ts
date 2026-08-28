@@ -52,15 +52,18 @@ export function createDevGame(phase: GamePhase, playerCount = DEV_PLAYERS): Game
     state.revealedEvidence = CASE_001.evidence.map((e) => e.id);
   }
 
-  // From the vote reveal onward there must be a completed ballot.
+  // From the vote reveal onward there must be a completed ballot. Votes name
+  // characters, and nobody may name themselves — so seat 0 names the second
+  // character and everyone else names the third, giving a clear winner.
   if (phaseIsAtOrAfter(phase, 'VOTE_REVEAL')) {
-    const votes: Record<PlayerId, PlayerId> = {};
+    const votes: Record<PlayerId, string> = {};
     players.forEach((player, i) => {
-      // Everyone but the first voter accuses seat 3; enough for a clear result.
-      const target = players[i === 0 ? 1 : 2] ?? players[0];
+      const target = CASE_001.characters[i === 2 ? 1 : 2];
       if (target) votes[player.id] = target.id;
     });
     state.votes = votes;
+    // Land on the finished reveal rather than mid-readout.
+    state.voteRevealStep = players.length;
   }
 
   return state;

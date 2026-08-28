@@ -1,5 +1,6 @@
 import { isBriefingStep } from './briefing';
 import { isPhase } from './phases';
+import { isVoteStep } from './voting';
 import type { GameState, Player } from './types';
 import { SCHEMA_VERSION } from './types';
 import { createInitialState } from './initialState';
@@ -45,7 +46,11 @@ export function isGameState(value: unknown): value is GameState {
     isStringArray(value.revealedEvidence) &&
     typeof value.evidenceRevealed === 'number' &&
     typeof value.voteCursor === 'number' &&
+    isVoteStep(value.voteStep) &&
+    typeof value.voteResumed === 'boolean' &&
     isStringRecord(value.votes) &&
+    isStringArray(value.revoteCandidates) &&
+    typeof value.voteRevealStep === 'number' &&
     typeof value.revealBeat === 'number' &&
     (value.createdAt === null || typeof value.createdAt === 'number') &&
     (value.updatedAt === null || typeof value.updatedAt === 'number')

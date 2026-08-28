@@ -1,4 +1,4 @@
-import type { CaseId, EvidenceId } from '../content/types';
+import type { CaseId, CharacterId, EvidenceId } from '../content/types';
 import type { GamePhase } from './phases';
 import type { PlayerId } from './types';
 
@@ -61,9 +61,20 @@ export type GameEvent =
 
   // VOTING
   | { type: 'START_VOTING' }
-  | { type: 'CAST_VOTE'; voterId: PlayerId; accusedId: PlayerId }
+  /** The player at the device confirms they are alone with it. Opens the gate. */
+  | { type: 'UNLOCK_VOTE' }
+  /**
+   * "LOCK VOTE". Carries the target so a vote can never be recorded from a
+   * selection the engine cannot see — there is no "current selection" in state
+   * to submit by accident.
+   */
+  | { type: 'CAST_VOTE'; voterId: PlayerId; targetCharacterId: CharacterId }
+  /** Run the single approved revote between the tied characters. */
+  | { type: 'START_REVOTE' }
 
   // REVEAL
+  /** Read out the next vote. The result appears once they have all been read. */
+  | { type: 'ADVANCE_VOTE_REVEAL' }
   | { type: 'SHOW_TRUTH' }
   | { type: 'ADVANCE_TRUTH_BEAT' }
   | { type: 'COMPLETE_CASE' }

@@ -1,6 +1,7 @@
 import type { CaseDefinition, CaseId, CharacterId, EvidenceId } from '../content/types';
 import type { BriefingStep } from './briefing';
 import type { GamePhase } from './phases';
+import type { VoteStep } from './voting';
 
 export type PlayerId = string;
 
@@ -12,7 +13,7 @@ export interface Player {
 }
 
 /** Bumped whenever the persisted shape of GameState changes. */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /**
  * The one authoritative game state. Every view reads from this; no view keeps
@@ -53,8 +54,26 @@ export interface GameState {
   evidenceRevealed: number;
   /** Index into `players` for the pass-and-play voting handoff. */
   voteCursor: number;
-  /** voterId -> accused playerId. */
-  votes: Record<PlayerId, PlayerId>;
+  /** How far the player at the device has got. `LOCKED` means nothing is shown. */
+  voteStep: VoteStep;
+  /**
+   * True when a private vote that was already open got restored from storage.
+   * The gate uses it to explain itself instead of silently reopening.
+   */
+  voteResumed: boolean;
+  /**
+   * voterId -> the character they named. Only *locked* votes are here; a
+   * selection still being considered never leaves the voting screen, so it is
+   * neither stored nor persisted.
+   */
+  votes: Record<PlayerId, CharacterId>;
+  /**
+   * The tied characters a revote is being run between. Empty means this is
+   * the first round — which is also what stops a second revote.
+   */
+  revoteCandidates: CharacterId[];
+  /** How many votes have been read out during VOTE_REVEAL. */
+  voteRevealStep: number;
   /** Index into the case's truth beats during TRUTH_REVEAL. */
   revealBeat: number;
   createdAt: number | null;

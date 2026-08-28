@@ -13,6 +13,13 @@ import {
   visibleFragmentCount,
   type EvidenceState,
 } from './evidence';
+import {
+  resolveVote,
+  tallyVotes,
+  type Vote,
+  type VoteCount,
+  type VoteOutcome,
+} from './voting';
 import type { GameState, Player, PlayerId } from './types';
 
 /**
@@ -182,43 +189,126 @@ export function evidenceStateOf(
   return state.evidenceRevealed > SEALED && state.phase === 'EVIDENCE' ? 'INSPECTING' : 'AVAILABLE';
 }
 
-export interface VoteTally {
-  playerId: PlayerId;
-  name: string;
-  votes: number;
-}
+/* -------------------------------------------------------------------- vote */
 
-/** Vote counts per accused player, highest first. */
-export function voteTally(state: GameState): VoteTally[] {
-  const counts = new Map<PlayerId, number>();
-  for (const accusedId of Object.values(state.votes)) {
-    counts.set(accusedId, (counts.get(accusedId) ?? 0) + 1);
-  }
-  return state.players
-    .map((p) => ({ playerId: p.id, name: p.name, votes: counts.get(p.id) ?? 0 }))
-    .sort((a, b) => b.votes - a.votes);
-}
-
-/** The accused player(s) with the most votes. More than one means a tie. */
-export function accusedPlayers(state: GameState): VoteTally[] {
-  const tally = voteTally(state).filter((t) => t.votes > 0);
-  const top = tally[0];
-  if (!top) return [];
-  return tally.filter((t) => t.votes === top.votes);
-}
-
-/** The player who was actually dealt the culprit's character, if any. */
-export function culpritPlayer(
+/** The characters actually in play — those dealt to a seated player. */
+export function activeCharacterIds(
   state: GameState,
   def: CaseDefinition | undefined,
-): Player | undefined {
-  if (!def?.culpritCharacterId) return undefined;
-  const culpritId = def.culpritCharacterId;
-  const entry = Object.entries(state.assignments).find(([, cid]) => cid === culpritId);
-  if (!entry) return undefined;
-  return playerById(state, entry[0]);
+): CharacterId[] {
+  if (!def) return [];
+  const dealt = new Set(Object.values(state.assignments));
+  return def.characters.filter((c) => dealt.has(c.id)).map((c) => c.id);
+}
+
+/**
+ * Who a given player is allowed to name.
+ *
+ * The two approved rules live here and only here: never yourself, and in a
+ * revote only the tied characters. The reducer checks the submitted target
+ * against this same list, so the UI cannot offer an option the engine would
+ * refuse, and a hand-dispatched event cannot beat an option the UI hides.
+ */
+export function votableCharacterIds(
+  state: GameState,
+  def: CaseDefinition | undefined,
+  voterId: PlayerId,
+): CharacterId[] {
+  const own = state.assignments[voterId];
+  const pool =
+    state.revoteCandidates.length > 0 ? state.revoteCandidates : activeCharacterIds(state, def);
+  return pool.filter((id) => id !== own);
+}
+
+/**
+ * The options to put in front of whoever is holding the device, or nothing.
+ *
+ * Gated on the phase *and* the gate, exactly like `revealableCharacterId`.
+ * The pass screen therefore renders no ballot at all — there is nothing on it
+ * to leave behind when the phone changes hands.
+ */
+export function ballotOptions(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): CharacterDefinition[] {
+  if (state.phase !== 'VOTING' || state.voteStep !== 'VOTING' || !def) return [];
+  const voter = currentVoter(state);
+  if (!voter) return [];
+  const votable = votableCharacterIds(state, def, voter.id);
+  return def.characters.filter((c) => votable.includes(c.id));
+}
+
+/**
+ * One entry per player, in seat order. Unsubmitted votes carry no target, so
+ * a ballot in progress cannot be read out of this.
+ */
+export function ballot(state: GameState): Vote[] {
+  return state.players.map((player) => {
+    const target = state.votes[player.id];
+    return {
+      playerId: player.id,
+      targetCharacterId: target ?? null,
+      submitted: target !== undefined,
+    };
+  });
 }
 
 export function allVotesCast(state: GameState): boolean {
   return state.players.length > 0 && Object.keys(state.votes).length === state.players.length;
+}
+
+/** Counts per candidate, highest first. Derived — never authored anywhere. */
+export function voteCounts(state: GameState, def: CaseDefinition | undefined): VoteCount[] {
+  const candidates =
+    state.revoteCandidates.length > 0 ? state.revoteCandidates : activeCharacterIds(state, def);
+  return tallyVotes(state.votes, candidates);
+}
+
+/**
+ * What the room decided. `PENDING` until every player has locked a vote, so
+ * no partial result can reach a screen mid-round.
+ */
+export function voteOutcome(state: GameState, def: CaseDefinition | undefined): VoteOutcome {
+  return resolveVote(voteCounts(state, def), {
+    allVotesIn: allVotesCast(state),
+    hasRevoted: state.revoteCandidates.length > 0,
+  });
+}
+
+export interface VoteRevealLine {
+  voter: CharacterDefinition | undefined;
+  target: CharacterDefinition | undefined;
+}
+
+/**
+ * The votes read out so far, in seat order.
+ *
+ * Sliced to `voteRevealStep`, not filtered — a vote that has not been reached
+ * yet never reaches the component, so the sequence cannot be spoiled by
+ * reading the DOM. Outside VOTE_REVEAL this is always empty, which is what
+ * keeps every ballot sealed until the last one is in.
+ */
+export function voteRevealLines(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): VoteRevealLine[] {
+  if (state.phase !== 'VOTE_REVEAL' || !def) return [];
+  const find = (id: CharacterId | undefined) => def.characters.find((c) => c.id === id);
+  return state.players.slice(0, state.voteRevealStep).map((player) => ({
+    voter: find(state.assignments[player.id]),
+    target: find(state.votes[player.id]),
+  }));
+}
+
+/** True once every vote has been read out and the result may be shown. */
+export function voteRevealComplete(state: GameState): boolean {
+  return state.phase === 'VOTE_REVEAL' && state.voteRevealStep >= state.players.length;
+}
+
+export function charactersByIds(
+  def: CaseDefinition | undefined,
+  ids: readonly CharacterId[],
+): CharacterDefinition[] {
+  if (!def) return [];
+  return def.characters.filter((c) => ids.includes(c.id));
 }

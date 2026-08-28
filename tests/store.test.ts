@@ -40,7 +40,11 @@ describe('game store', () => {
     // not an optimisation.
     for (const phase of GAME_PHASES) {
       const state = createDevGame(phase);
-      const rejected = reduce(state, { type: 'CAST_VOTE', voterId: 'nobody', accusedId: 'nobody' }, ctx);
+      const rejected = reduce(
+        state,
+        { type: 'CAST_VOTE', voterId: 'nobody', targetCharacterId: 'nobody' },
+        ctx,
+      );
       if (phase !== 'VOTING') expect(rejected).toBe(state);
     }
   });

@@ -3,7 +3,7 @@ import type { GameEvent } from './events';
 import { nextBriefingStep } from './briefing';
 import { SEALED, isFullyUncovered, nextEvidenceId } from './evidence';
 import { canTransition, type GamePhase } from './phases';
-import { currentBriefingCharacterId } from './selectors';
+import { currentBriefingCharacterId, currentVoter, voteOutcome, votableCharacterIds } from './selectors';
 import { MAX_PLAYERS, MIN_PLAYERS, createInitialState, makePlayer, makePlayers } from './initialState';
 import type { EngineContext, GameState } from './types';
 import { migrate } from './validate';
@@ -17,6 +17,9 @@ import { migrate } from './validate';
  */
 /** The closed-gate briefing fields. Applied whenever the device changes hands. */
 const CLOSED_BRIEFING = { briefingStep: 'LOCKED', briefingResumed: false } as const;
+
+/** The same, for the private vote. */
+const CLOSED_VOTE = { voteStep: 'LOCKED', voteResumed: false } as const;
 
 export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): GameState {
   switch (event.type) {
@@ -197,22 +200,73 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
       return go(state, 'DECISION_READY', ctx);
 
     case 'START_VOTING':
-      return go(state, 'VOTING', ctx, { voteCursor: 0, votes: {} });
+      // A fresh decision: no carried-over ballot, and not a revote.
+      return go(state, 'VOTING', ctx, {
+        ...CLOSED_VOTE,
+        voteCursor: 0,
+        votes: {},
+        revoteCandidates: [],
+        voteRevealStep: 0,
+      });
+
+    case 'UNLOCK_VOTE': {
+      if (state.phase !== 'VOTING') return state;
+      // Only the gate opens a ballot, and only from closed.
+      if (state.voteStep !== 'LOCKED') return state;
+      if (!currentVoter(state)) return state;
+      return touch({ ...state, voteStep: 'VOTING', voteResumed: false }, ctx);
+    }
 
     case 'CAST_VOTE': {
       if (state.phase !== 'VOTING') return state;
+      // A vote can only be locked from behind an opened gate.
+      if (state.voteStep !== 'VOTING') return state;
       const voter = state.players.find((p) => p.id === event.voterId);
-      const accused = state.players.find((p) => p.id === event.accusedId);
-      if (!voter || !accused) return state;
+      if (!voter) return state;
       // Only the player whose turn it is may vote, and only once.
       if (state.players[state.voteCursor]?.id !== voter.id) return state;
       if (voter.id in state.votes) return state;
-      const votes = { ...state.votes, [voter.id]: accused.id };
+      // The engine decides what is votable: not yourself, and in a revote only
+      // the tied characters. An abstention has no target and fails here too.
+      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      if (!votableCharacterIds(state, def, voter.id).includes(event.targetCharacterId)) {
+        return state;
+      }
+      const votes = { ...state.votes, [voter.id]: event.targetCharacterId };
       const next = state.voteCursor + 1;
       if (next < state.players.length) {
-        return touch({ ...state, votes, voteCursor: next }, ctx);
+        // The gate shuts before the device moves, so the next player arrives
+        // at a sealed screen rather than at the last player's ballot.
+        return touch({ ...state, ...CLOSED_VOTE, votes, voteCursor: next }, ctx);
       }
-      return go(state, 'VOTE_REVEAL', ctx, { votes, voteCursor: 0 });
+      return go(state, 'VOTE_REVEAL', ctx, {
+        ...CLOSED_VOTE,
+        votes,
+        voteCursor: 0,
+        voteRevealStep: 0,
+      });
+    }
+
+    case 'ADVANCE_VOTE_REVEAL': {
+      if (state.phase !== 'VOTE_REVEAL') return state;
+      if (state.voteRevealStep >= state.players.length) return state;
+      return touch({ ...state, voteRevealStep: state.voteRevealStep + 1 }, ctx);
+    }
+
+    case 'START_REVOTE': {
+      if (state.phase !== 'VOTE_REVEAL') return state;
+      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      const outcome = voteOutcome(state, def);
+      // Only an unbroken tie earns a revote, and `resolveVote` reports a
+      // second tie as DEADLOCK — so this can never run twice.
+      if (outcome.kind !== 'TIE') return state;
+      return go(state, 'VOTING', ctx, {
+        ...CLOSED_VOTE,
+        revoteCandidates: outcome.characterIds,
+        votes: {},
+        voteCursor: 0,
+        voteRevealStep: 0,
+      });
     }
 
     case 'SHOW_TRUTH':

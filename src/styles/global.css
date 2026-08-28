@@ -595,6 +595,173 @@ h3 {
   animation: section-in var(--duration-base) var(--ease-entrance) both;
 }
 
+/* ---------------------------------------------------------------- decision */
+.decision {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-5);
+  padding: var(--space-6) 0;
+}
+
+.decision__question {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.decision__note {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  text-align: center;
+  text-wrap: pretty;
+  color: var(--color-text-muted);
+}
+
+/* ------------------------------------------------------------------ ballot */
+.ballot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ballot__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--duration-instant) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.ballot__option:active {
+  transform: scale(0.99);
+}
+
+/*
+ * Unmistakable but restrained: the brass edge and the lit portrait say
+ * "this one" without a checkmark, a glow, or anything that reads as a score.
+ */
+.ballot__option--selected {
+  border-color: var(--color-accent);
+  background: var(--color-surface-raised);
+}
+
+.ballot__option--selected .portrait {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.ballot__name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.ballot__note {
+  padding-top: var(--space-2);
+  font-size: var(--text-xs);
+  text-align: center;
+  color: var(--color-text-faint);
+}
+
+.portrait {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+/* ------------------------------------------------------------- vote reveal */
+.tally {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Sized so four votes plus the verdict clear a 375x812 phone. */
+.tally__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  /* Each vote lands on its own beat. */
+  animation: section-in var(--duration-base) var(--ease-entrance) both;
+}
+
+.tally__voter,
+.tally__target {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.tally__voter {
+  color: var(--color-text-muted);
+}
+
+.tally__arrow {
+  color: var(--color-accent);
+}
+
+.verdict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  animation: section-in var(--duration-base) var(--ease-entrance) both;
+}
+
+.verdict__label {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.verdict__name {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+.verdict__note {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
 /* -------------------------------------------------------------- dev tools */
 .devbar {
   position: sticky;

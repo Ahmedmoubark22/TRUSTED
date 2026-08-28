@@ -2,16 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { CASE_001 } from '../src/content/cases/case-001';
 import { MAX_PLAYERS, MIN_PLAYERS, createInitialState } from '../src/engine/initialState';
 import { reduce } from '../src/engine/reducer';
-import { accusedPlayers, allVotesCast, voteTally } from '../src/engine/selectors';
+import { allVotesCast, voteCounts, voteOutcome } from '../src/engine/selectors';
 import type { GameState } from '../src/engine/types';
 import {
   briefAllPlayers,
   briefOnePlayer,
+  castVote,
+  characterOf,
   ctx,
   placeNextEvidence,
   playAllEvidence,
+  readOutVotes,
   run,
   seatedGame,
+  voteAll,
 } from './helpers';
 
 describe('reduce', () => {
@@ -101,30 +105,31 @@ describe('reduce', () => {
   });
 
   it('collects votes in seat order and only from the player whose turn it is', () => {
-    let state = briefAllPlayers(seatedGame());
-    state = run(state, { type: 'READY_TO_DECIDE' }, { type: 'START_VOTING' });
+    let state = run(briefAllPlayers(seatedGame()), { type: 'READY_TO_DECIDE' }, { type: 'START_VOTING' });
     expect(state.phase).toBe('VOTING');
 
     const [p1, p2, p3, p4] = state.players;
     if (!p1 || !p2 || !p3 || !p4) throw new Error('expected four players');
+    const target = characterOf(state, 2);
 
-    // Out-of-turn votes are rejected.
-    expect(reduce(state, { type: 'CAST_VOTE', voterId: p3.id, accusedId: p1.id }, ctx)).toBe(state);
+    // Out-of-turn votes are rejected, gate open or not.
+    const opened = run(state, { type: 'UNLOCK_VOTE' });
+    expect(
+      reduce(opened, { type: 'CAST_VOTE', voterId: p3.id, targetCharacterId: target }, ctx),
+    ).toBe(opened);
 
-    state = run(
-      state,
-      { type: 'CAST_VOTE', voterId: p1.id, accusedId: p3.id },
-      { type: 'CAST_VOTE', voterId: p2.id, accusedId: p3.id },
-      { type: 'CAST_VOTE', voterId: p3.id, accusedId: p1.id },
-    );
+    state = castVote(castVote(state, target), target);
     expect(state.phase).toBe('VOTING');
     expect(allVotesCast(state)).toBe(false);
 
-    state = run(state, { type: 'CAST_VOTE', voterId: p4.id, accusedId: p3.id });
+    // Seat 3 was dealt the character everyone else is naming, so it names another.
+    state = castVote(state, characterOf(state, 0));
+    state = castVote(state, target);
+
     expect(state.phase).toBe('VOTE_REVEAL');
     expect(allVotesCast(state)).toBe(true);
-    expect(voteTally(state)[0]).toMatchObject({ playerId: p3.id, votes: 3 });
-    expect(accusedPlayers(state).map((a) => a.playerId)).toEqual([p3.id]);
+    expect(voteCounts(state, CASE_001)[0]).toMatchObject({ characterId: target, votes: 3 });
+    expect(voteOutcome(state, CASE_001)).toEqual({ kind: 'DECIDED', characterId: target });
   });
 
   it('steps through every truth beat before closing the case', () => {
@@ -149,14 +154,11 @@ describe('reduce', () => {
     expect(state.phase).toBe('DECISION_READY');
 
     state = run(state, { type: 'START_VOTING' });
-
-    for (const player of state.players) {
-      const accused = state.players.find((p) => p.id !== player.id);
-      if (!accused) throw new Error('expected another player');
-      state = run(state, { type: 'CAST_VOTE', voterId: player.id, accusedId: accused.id });
-    }
+    // Everyone names the first character they are allowed to.
+    state = voteAll(state, (_seat, options) => options[0]!);
     expect(state.phase).toBe('VOTE_REVEAL');
 
+    state = readOutVotes(state);
     state = run(state, { type: 'SHOW_TRUTH' });
     while (state.phase === 'TRUTH_REVEAL') {
       state = run(state, { type: 'ADVANCE_TRUTH_BEAT' });

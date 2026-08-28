@@ -46,8 +46,8 @@ export const PHASE_META: Record<GamePhase, PhaseMeta> = {
   EVIDENCE: { title: 'Evidence', hint: 'Everyone may look.', isPrivate: false },
   DISCUSSION: { title: 'Discussion', hint: 'Talk. Out loud. To each other.', isPrivate: false },
   DECISION_READY: { title: 'Ready?', hint: 'The vote cannot be undone.', isPrivate: false },
-  VOTING: { title: 'Vote', hint: 'Pass the device. Vote in private.', isPrivate: true },
-  VOTE_REVEAL: { title: 'The Vote', hint: 'What the table decided.', isPrivate: false },
+  VOTING: { title: 'Vote', hint: 'Pass the device. One player only.', isPrivate: true },
+  VOTE_REVEAL: { title: 'The Vote', hint: 'What the room believed.', isPrivate: false },
   TRUTH_REVEAL: { title: 'The Truth', hint: 'What actually happened.', isPrivate: false },
   CASE_COMPLETE: { title: 'Case Closed', hint: 'Everyone knew something.', isPrivate: false },
 };
@@ -71,7 +71,11 @@ export const PHASE_TRANSITIONS: Record<GamePhase, readonly GamePhase[]> = {
   DISCUSSION: ['EVIDENCE', 'DECISION_READY'],
   DECISION_READY: ['VOTING', 'TABLE'],
   VOTING: ['VOTE_REVEAL'],
-  VOTE_REVEAL: ['TRUTH_REVEAL'],
+  // The revote is the one loop in the machine. A tie sends the table back
+  // through VOTING rather than adding a phase — the round is the same round,
+  // just narrowed to the tied characters, and `revoteCandidates` being
+  // non-empty is what stops it happening twice.
+  VOTE_REVEAL: ['TRUTH_REVEAL', 'VOTING'],
   TRUTH_REVEAL: ['CASE_COMPLETE'],
   CASE_COMPLETE: ['HOME'],
 };

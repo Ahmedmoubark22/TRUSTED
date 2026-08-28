@@ -15,17 +15,25 @@ export interface GamePersistence {
 }
 
 /**
- * Close any briefing that was open when the state was written.
+ * Close anything private that was open when the state was written.
  *
  * A refresh must never drop somebody straight back into live private content
  * — the phone may well be in a different pair of hands by then. Restoring
- * always lands on the gate, and `briefingResumed` tells the gate to say so
+ * always lands on the gate, and the `*Resumed` flag tells the gate to say so
  * rather than reopening as if nothing happened.
+ *
+ * Both private moments are covered: reading a briefing, and casting a vote.
+ * A restored ballot is sealed but *not* discarded — the votes already locked
+ * in are still valid, and the player mid-decision simply chooses again.
  */
 function sealPrivateContent(state: GameState): GameState {
-  if (state.phase !== 'PRIVATE_BRIEFINGS') return state;
-  if (state.briefingStep === 'LOCKED') return state;
-  return { ...state, briefingStep: 'LOCKED', briefingResumed: true };
+  if (state.phase === 'PRIVATE_BRIEFINGS' && state.briefingStep !== 'LOCKED') {
+    return { ...state, briefingStep: 'LOCKED', briefingResumed: true };
+  }
+  if (state.phase === 'VOTING' && state.voteStep !== 'LOCKED') {
+    return { ...state, voteStep: 'LOCKED', voteResumed: true };
+  }
+  return state;
 }
 
 export function createGamePersistence(store: KeyValueStore = createLocalStore()): GamePersistence {

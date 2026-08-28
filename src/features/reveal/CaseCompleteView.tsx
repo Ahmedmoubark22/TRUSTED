@@ -1,21 +1,25 @@
-import { Button, Card, Screen } from '../../components';
-import { accusedPlayers, characterFor, culpritPlayer } from '../../engine/selectors';
+import { Button, Card, PlaceholderNote, Screen } from '../../components';
+import { characterFor } from '../../engine/selectors';
 import { useCaseDefinition, useDispatch, useGameState } from '../../app/hooks';
 
+/**
+ * Who everyone was.
+ *
+ * It deliberately does not say whether the room got it right. Judging the
+ * vote needs an authored resolution, and this case does not have one yet —
+ * claiming a verdict off an unauthored culprit would be inventing the answer.
+ * The seating chart is the honest thing to show until the reveal is written.
+ */
 export function CaseCompleteView() {
   const state = useGameState();
   const dispatch = useDispatch();
   const def = useCaseDefinition();
 
-  const culprit = culpritPlayer(state, def);
-  const accused = accusedPlayers(state);
-  const tableWasRight = accused.length === 1 && accused[0]?.playerId === culprit?.id;
-
   return (
     <Screen
       kicker="Case closed"
-      title={tableWasRight ? 'The table was right' : 'The table was wrong'}
-      lede={culprit ? `${culprit.name} was responsible.` : undefined}
+      title="Everyone knew something"
+      lede="This is who was sitting where."
       actions={
         <Button variant="primary" onClick={() => dispatch({ type: 'BACK_TO_HOME' })}>
           Back to cases
@@ -33,6 +37,7 @@ export function CaseCompleteView() {
           />
         );
       })}
+      {def?.isPlaceholder ? <PlaceholderNote>The resolution is not written yet.</PlaceholderNote> : null}
     </Screen>
   );
 }
