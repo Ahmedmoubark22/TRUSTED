@@ -17,12 +17,14 @@ export function CaseCompleteView() {
 
   const result = caseResult(state, def);
   const answer = immediateAnswerCharacter(def);
+  // What the room was actually asked to work out, in the case's own words.
+  const phrase = def?.truth.immediateActionPhrase ?? 'took it';
 
   return (
     <Screen
       kicker="Case closed"
       title={HEADLINE[result]}
-      lede={answer ? summary(result, answer.name) : undefined}
+      lede={answer ? summary(result, answer.name, phrase) : undefined}
       actions={
         <Button variant="primary" onClick={() => dispatch({ type: 'BACK_TO_HOME' })}>
           Back to cases
@@ -36,7 +38,9 @@ export function CaseCompleteView() {
           return (
             <li className="roster__row" key={player.id}>
               <CharacterPortrait name={character?.name ?? player.name} />
-              <span className="roster__character">{character?.name ?? 'Unassigned'}</span>
+              <span className="roster__character" dir="auto">
+                {character?.name ?? 'Unassigned'}
+              </span>
               <span className="roster__player">{player.name}</span>
             </li>
           );
@@ -52,13 +56,18 @@ const HEADLINE: Record<TruthResult, string> = {
   MISSED_IMMEDIATE_TRUTH: 'The group missed the immediate truth',
 };
 
-function summary(result: TruthResult, answerName: string): string {
+/**
+ * `phrase` is the case's own answer to "what were we working out" — "took the
+ * letter", «حرّك الظرف». Without it this sentence can only be written by
+ * hard-coding one case's fiction into a screen every case ends on.
+ */
+function summary(result: TruthResult, answerName: string, phrase: string): string {
   switch (result) {
     case 'FOUND_IMMEDIATE_TRUTH':
-      return `You identified who took the letter. What was underneath it, ${answerName} never said out loud.`;
+      return `You identified who ${phrase}. What was underneath it, ${answerName} never said out loud.`;
     case 'PARTIAL_TRUTH':
       return `${answerName} was among your names, but the room never settled on one.`;
     case 'MISSED_IMMEDIATE_TRUTH':
-      return `It was ${answerName} who took the letter — and his reason was not the one you were looking for.`;
+      return `It was ${answerName} who ${phrase} — and the reason was not the one you were looking for.`;
   }
 }

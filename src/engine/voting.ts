@@ -16,7 +16,7 @@
  * not been written yet. This module must stay ignorant of the culprit.
  */
 
-import type { CharacterId } from '../content/types';
+import type { CaseDefinition, CharacterId } from '../content/types';
 
 export const VOTE_STEPS = ['LOCKED', 'VOTING'] as const;
 
@@ -26,8 +26,20 @@ export function isVoteStep(value: unknown): value is VoteStep {
   return typeof value === 'string' && (VOTE_STEPS as readonly string[]).includes(value);
 }
 
-/** The approved question. One place, so it cannot drift between screens. */
+/** The product's default question. One place, so it cannot drift between screens. */
 export const DECISION_QUESTION = 'Who do you trust least?';
+
+/**
+ * The question this case puts to the table.
+ *
+ * A case may ask its own — Case 002 asks «مين حرّك الظرف؟» — and a case that
+ * does not gets the default. This is wording only: the ballot is still built
+ * from characters, and the vote is still read against the case's authored
+ * answer, so nothing here knows or can know who that is.
+ */
+export function decisionQuestionFor(def: CaseDefinition | undefined): string {
+  return def?.decisionQuestion ?? DECISION_QUESTION;
+}
 
 /**
  * One player's decision.

@@ -63,10 +63,20 @@ export const OPEN_LABELS: Record<string, string> = {
   invitation: 'Open the card',
   photograph: 'Look closer',
   letter: 'Unfold the page',
+  notebook: 'Open the notebook',
+  list: 'Take it down',
+  receipt: 'Unfold the receipt',
+  phoneScreen: 'Read the screen',
+  envelope: 'Pick it up',
 };
 
 export const CONTINUE_LABELS: Record<string, string> = {
   invitation: 'Turn it over',
   photograph: 'Turn it over',
   letter: 'Read on',
+  notebook: 'Look closer',
+  list: 'Look closer',
+  receipt: 'Turn it over',
+  phoneScreen: 'Scroll down',
+  envelope: 'Look closer',
 };

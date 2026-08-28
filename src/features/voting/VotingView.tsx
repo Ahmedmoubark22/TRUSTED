@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, CharacterPortrait, Screen } from '../../components';
 import type { CharacterDefinition, CharacterId } from '../../content/types';
 import { ballotOptions, currentVoter } from '../../engine/selectors';
-import { DECISION_QUESTION } from '../../engine/voting';
+import { decisionQuestionFor } from '../../engine/voting';
 import { useCaseDefinition, useDispatch, useGameState } from '../../app/hooks';
 import type { Player } from '../../engine/types';
 
@@ -60,6 +60,7 @@ export function VotingView() {
       voter={voter}
       position={position}
       isRevote={isRevote}
+      question={decisionQuestionFor(def)}
       options={options}
       onLock={(targetCharacterId) =>
         dispatch({ type: 'CAST_VOTE', voterId: voter.id, targetCharacterId })
@@ -72,11 +73,13 @@ interface BallotProps {
   voter: Player;
   position: string;
   isRevote: boolean;
+  /** The case's own decision question, or the product default. */
+  question: string;
   options: CharacterDefinition[];
   onLock: (targetCharacterId: CharacterId) => void;
 }
 
-function Ballot({ voter, position, isRevote, options, onLock }: BallotProps) {
+function Ballot({ voter, position, isRevote, question, options, onLock }: BallotProps) {
   /*
    * The selection lives here and nowhere else.
    *
@@ -89,7 +92,7 @@ function Ballot({ voter, position, isRevote, options, onLock }: BallotProps) {
   return (
     <Screen
       kicker={isRevote ? `Revote · ${position}` : `Private · ${position}`}
-      title={DECISION_QUESTION}
+      title={question}
       lede={isRevote ? 'The room was split. Choose between the two it was split over.' : undefined}
       actions={
         <Button
@@ -113,7 +116,9 @@ function Ballot({ voter, position, isRevote, options, onLock }: BallotProps) {
                 onClick={() => setSelected(character.id)}
               >
                 <CharacterPortrait name={character.name} />
-                <span className="ballot__name">{character.name}</span>
+                <span className="ballot__name" dir="auto">
+                  {character.name}
+                </span>
               </button>
             </li>
           );

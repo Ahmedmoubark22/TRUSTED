@@ -46,7 +46,7 @@ export function TableView() {
       ) : (
         <ol className="table__objects">
           {placed.map((item) => (
-            <li className={`table__object table__object--${item.type}`} key={item.id}>
+            <li className={`table__object table__object--${item.type}`} key={item.id} dir="auto">
               <span className="table__object-title">{item.title}</span>
               <span className="table__object-note">{item.description}</span>
             </li>

@@ -53,7 +53,19 @@ export interface PrivateBriefing {
  * evidence viewer, not one screen per object — a new type is a new stylesheet
  * rule and a new affordance label, never a new component.
  */
-export const EVIDENCE_TYPES = ['invitation', 'photograph', 'letter'] as const;
+export const EVIDENCE_TYPES = [
+  // Case 001
+  'invitation',
+  'photograph',
+  'letter',
+  // Case 002 — five more objects, each a stylesheet rule and an affordance
+  // label under the same single viewer. No new components.
+  'notebook',
+  'list',
+  'receipt',
+  'phoneScreen',
+  'envelope',
+] as const;
 
 export type EvidenceType = (typeof EVIDENCE_TYPES)[number];
 
@@ -145,6 +157,16 @@ export interface CaseTruth {
   immediateAnswerCharacterId: CharacterId;
   /** The fact that names them. Must be the `immediate` one. */
   immediateFactId: TruthFactId;
+  /**
+   * How the immediate question reads as a clause — "took the letter",
+   * "حرّك الظرف".
+   *
+   * The shared reveal and ending screens have one sentence each that has to
+   * name what the room was actually asked to work out. Without this they can
+   * only do it by hard-coding one case's fiction into a view every case uses.
+   * Omitted falls back to a neutral phrasing.
+   */
+  immediateActionPhrase?: string;
   /** Every layer, in reveal order. */
   facts: TruthFact[];
 }
@@ -162,6 +184,15 @@ export interface CaseDefinition {
   estimatedMinutes: number;
   characters: CharacterDefinition[];
   evidence: EvidenceDefinition[];
+  /**
+   * The question the table answers at the decision, if this case asks its own.
+   *
+   * Votes still target a character and are still read against
+   * `truth.immediateAnswerCharacterId` — only the wording of the question
+   * changes. Omitted means the product's default question, which is what
+   * Case 001 uses.
+   */
+  decisionQuestion?: string;
   /** The authored resolution, played out during TRUTH_REVEAL. */
   truth: CaseTruth;
   /** True while any part of the case is still scaffolding. */

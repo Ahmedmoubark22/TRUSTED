@@ -48,8 +48,12 @@ export function EvidenceViewer({ evidence, fragments, complete, onInspect }: Evi
           ) : null}
         </span>
 
-        <span className="evidence__title">{evidence.title}</span>
-        <span className="evidence__description">{evidence.description}</span>
+        <span className="evidence__title" dir="auto">
+          {evidence.title}
+        </span>
+        <span className="evidence__description" dir="auto">
+          {evidence.description}
+        </span>
 
         {sealed ? (
           <span className="evidence__cue">{label}</span>
@@ -58,7 +62,12 @@ export function EvidenceViewer({ evidence, fragments, complete, onInspect }: Evi
             {fragments.map((fragment, i) => (
               // Index-keyed on purpose: fragments only ever append, and a
               // fragment's identity is its position on the object.
-              <span className="evidence__fragment" key={i}>
+              // `dir="auto"` on the fragment, not on each line. A line that is
+              // only digits and operators — "٦ × ١٥٠٠٠ = ٩٠٠٠٠" — has no strong
+              // character to infer from and would resolve left-to-right on its
+              // own, breaking the alignment of the arithmetic it sits in. The
+              // fragment always has its caption to go on, and the lines inherit.
+              <span className="evidence__fragment" key={i} dir="auto">
                 <span className="evidence__caption">{fragment.caption}</span>
                 {fragment.lines.map((line, j) => (
                   <span className="evidence__line" key={j}>

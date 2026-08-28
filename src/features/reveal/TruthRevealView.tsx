@@ -48,7 +48,9 @@ export function TruthRevealView() {
       <div className={`truth${progress.isFinal ? ' truth--final' : ''}`} key={fact.id}>
         {isOpening ? <VoteComparison /> : null}
 
-        <p className="truth__explanation">{fact.explanation}</p>
+        <p className="truth__explanation" dir="auto">
+          {fact.explanation}
+        </p>
 
         {people.length > 0 || objects.length > 0 ? (
           <div className="truth__refs">
@@ -60,7 +62,9 @@ export function TruthRevealView() {
             ))}
             {objects.map((item) => (
               <span className="truth__ref truth__ref--object" key={item.id}>
-                <span className="truth__ref-name">{item.title}</span>
+                <span className="truth__ref-name" dir="auto">
+                  {item.title}
+                </span>
               </span>
             ))}
           </div>
@@ -89,6 +93,7 @@ function VoteComparison() {
   const result = caseResult(state, def);
   const chosen = chosenCharacter(state, def);
   const answer = immediateAnswerCharacter(def);
+  const phrase = def?.truth.immediateActionPhrase ?? 'took it';
   if (!answer) return null;
 
   return (
@@ -111,7 +116,7 @@ function VoteComparison() {
         <>
           <p className="found__line">The room looked elsewhere.</p>
           <p className="found__note">
-            {chosen ? `You named ${chosen.name}. ` : ''}It was {answer.name} who took it.
+            {chosen ? `You named ${chosen.name}. ` : ''}It was {answer.name} who {phrase}.
           </p>
         </>
       )}

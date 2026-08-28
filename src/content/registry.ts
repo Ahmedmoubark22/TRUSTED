@@ -5,8 +5,9 @@
  */
 import type { CaseDefinition, CaseId } from './types';
 import { CASE_001 } from './cases/case-001';
+import { CASE_002 } from './cases/case-002';
 
-export const CASES: readonly CaseDefinition[] = [CASE_001];
+export const CASES: readonly CaseDefinition[] = [CASE_001, CASE_002];
 
 export const DEFAULT_CASE_ID: CaseId = CASE_001.id;
 

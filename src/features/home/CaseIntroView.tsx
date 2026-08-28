@@ -9,7 +9,7 @@ export function CaseIntroView() {
 
   return (
     <Screen
-      kicker="Case 001"
+      kicker={caseLabel(def.id)}
       title={def.title}
       lede={def.subtitle}
       actions={
@@ -25,10 +25,23 @@ export function CaseIntroView() {
     >
       <div className="stack">
         {def.intro.map((paragraph, i) => (
-          <p key={i}>{paragraph}</p>
+          <p key={i} dir="auto">
+            {paragraph}
+          </p>
         ))}
       </div>
       {def.isPlaceholder ? <PlaceholderNote>Case text is scaffolding, not final writing.</PlaceholderNote> : null}
     </Screen>
   );
+}
+
+/**
+ * "case-002" → "Case 002".
+ *
+ * Read off the case's own id rather than hard-coded, so a second case does not
+ * open under the first one's number.
+ */
+function caseLabel(caseId: string): string {
+  const number = caseId.replace(/^case-/, '');
+  return `Case ${number}`;
 }

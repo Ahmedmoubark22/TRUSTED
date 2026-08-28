@@ -292,7 +292,7 @@ h3 {
 /* Screens that must only be seen by the player holding the device. */
 .private-notice {
   padding: var(--space-3) var(--space-4);
-  border-left: 2px solid var(--color-private);
+  border-inline-start: 2px solid var(--color-private);
   background: var(--color-surface-sunken);
   color: var(--color-text-muted);
   font-size: var(--text-sm);
@@ -351,9 +351,12 @@ h3 {
   list-style: none;
 }
 
+/* Logical, not left: a briefing written in Arabic sets `dir="auto"` on the
+   list, and the rule that marks each line has to move to the other edge with
+   it. Identical rendering for left-to-right content. */
 .briefing__list li {
-  padding-left: var(--space-4);
-  border-left: 1px solid var(--color-border-strong);
+  padding-inline-start: var(--space-4);
+  border-inline-start: 1px solid var(--color-border-strong);
   line-height: var(--leading-snug);
 }
 
@@ -401,7 +404,7 @@ h3 {
   background: var(--color-surface-raised);
   box-shadow: var(--shadow-lift);
   color: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   /* Immediate: the press reads before anything else runs. */
   transition: transform var(--duration-instant) var(--ease-standard);
@@ -510,6 +513,69 @@ h3 {
   padding-bottom: var(--space-5);
 }
 
+/*
+ * Case 002's five objects. Same rule as above: a type is a presentation, not
+ * a component — an aspect ratio, a surface, occasionally a face.
+ *
+ * The shared constraint is the one Case 001 already works to: a *sealed*
+ * object has to clear a 375x812 phone without scrolling, plate plus title plus
+ * description plus cue. That caps a full-width plate at roughly 240px tall.
+ * The two objects that are genuinely portrait — a receipt and a phone — get
+ * there by being narrower than the card rather than shorter than themselves,
+ * which is also what they look like in the hand.
+ */
+.evidence--notebook .evidence__object {
+  background: linear-gradient(var(--color-surface-raised), var(--color-surface));
+}
+
+.evidence--notebook .evidence__plate {
+  aspect-ratio: 5 / 4;
+  background:
+    linear-gradient(100deg, rgba(120, 140, 190, 0.14), transparent 45%),
+    var(--color-surface-sunken);
+}
+
+/* A sheet taped to a door: wide, thin, and squared off. */
+.evidence--list .evidence__plate {
+  aspect-ratio: 3 / 2;
+  border-radius: var(--radius-sm);
+}
+
+.evidence--list .evidence__line,
+.evidence--receipt .evidence__line {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+}
+
+/* A till receipt: narrow and portrait, and the arithmetic is on the back. */
+.evidence--receipt .evidence__plate {
+  width: 55%;
+  aspect-ratio: 2 / 3;
+  margin-inline: auto;
+}
+
+/* A lit screen on the arm of a chair. */
+.evidence--phoneScreen .evidence__plate {
+  width: 45%;
+  aspect-ratio: 9 / 16;
+  margin-inline: auto;
+  background:
+    radial-gradient(90% 60% at 50% 8%, rgba(236, 231, 221, 0.14), transparent 65%),
+    var(--color-surface-sunken);
+}
+
+/* Still sealed, and it stays that way. */
+.evidence--envelope .evidence__object {
+  background: linear-gradient(var(--color-surface-raised), var(--color-surface));
+}
+
+.evidence--envelope .evidence__plate {
+  aspect-ratio: 3 / 2;
+  background:
+    linear-gradient(155deg, rgba(201, 162, 74, 0.12), transparent 60%),
+    var(--color-surface-sunken);
+}
+
 @keyframes evidence-in {
   from {
     opacity: 0;
@@ -548,7 +614,7 @@ h3 {
   gap: var(--space-1);
   padding: var(--space-4);
   border: 1px solid var(--color-border);
-  border-left: 2px solid var(--color-accent-dim);
+  border-inline-start: 2px solid var(--color-accent-dim);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   animation: settle var(--duration-base) var(--ease-entrance) both;
@@ -642,7 +708,7 @@ h3 {
   border-radius: var(--radius-md);
   background: var(--color-surface);
   color: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition:
     transform var(--duration-instant) var(--ease-standard),
@@ -845,8 +911,9 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-4) 0 var(--space-4) var(--space-4);
-  border-left: 2px solid var(--color-accent);
+  padding-block: var(--space-4);
+  padding-inline: var(--space-4) 0;
+  border-inline-start: 2px solid var(--color-accent);
 }
 
 .found__line {
@@ -897,7 +964,7 @@ h3 {
 }
 
 .roster__player {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-size: var(--text-sm);
   color: var(--color-text-faint);
 }

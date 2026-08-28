@@ -14,7 +14,11 @@ export function Card({ title, meta, muted, locked, children }: CardProps) {
     .join(' ');
   return (
     <div className={classes}>
-      {title ? <p className="card__title">{title}</p> : null}
+      {title ? (
+        <p className="card__title" dir="auto">
+          {title}
+        </p>
+      ) : null}
       {meta ? <p className="card__meta">{meta}</p> : null}
       {children}
     </div>

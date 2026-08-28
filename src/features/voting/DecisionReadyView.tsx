@@ -1,6 +1,6 @@
 import { Button, Screen } from '../../components';
-import { DECISION_QUESTION } from '../../engine/voting';
-import { useDispatch, useGameState } from '../../app/hooks';
+import { decisionQuestionFor } from '../../engine/voting';
+import { useCaseDefinition, useDispatch, useGameState } from '../../app/hooks';
 
 /**
  * The point of no return.
@@ -12,6 +12,7 @@ import { useDispatch, useGameState } from '../../app/hooks';
 export function DecisionReadyView() {
   const state = useGameState();
   const dispatch = useDispatch();
+  const def = useCaseDefinition();
 
   return (
     <Screen
@@ -29,7 +30,9 @@ export function DecisionReadyView() {
       }
     >
       <div className="decision">
-        <p className="decision__question">{DECISION_QUESTION}</p>
+        <p className="decision__question" dir="auto">
+          {decisionQuestionFor(def)}
+        </p>
         <p className="decision__note">
           The device passes seat by seat. Each of you names one person, alone, and hands it on.
           Nothing is shown until all {state.players.length} votes are in.

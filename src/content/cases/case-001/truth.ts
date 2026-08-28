@@ -21,6 +21,7 @@ import type { CaseTruth } from '../../types';
 export const CASE_001_TRUTH: CaseTruth = {
   immediateAnswerCharacterId: 'omar',
   immediateFactId: 'who-took-the-letter',
+  immediateActionPhrase: 'took the letter',
 
   facts: [
     {

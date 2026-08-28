@@ -120,9 +120,11 @@ function BriefingSectionBlock({
     <section className="briefing__section">
       <h2 className="briefing__label">{SECTION_LABELS[section]}</h2>
       {lines.length === 1 ? (
-        <p className="briefing__line">{lines[0]}</p>
+        <p className="briefing__line" dir="auto">
+          {lines[0]}
+        </p>
       ) : (
-        <ul className="briefing__list">
+        <ul className="briefing__list" dir="auto">
           {lines.map((line, i) => (
             <li key={i}>{line}</li>
           ))}

@@ -28,7 +28,9 @@ export function DiscussionView() {
       }
     >
       <div className="discuss">
-        <p className="discuss__prompt">{latest?.discussionPrompt ?? 'What do you think?'}</p>
+        <p className="discuss__prompt" dir="auto">
+          {latest?.discussionPrompt ?? 'What do you think?'}
+        </p>
       </div>
     </Screen>
   );

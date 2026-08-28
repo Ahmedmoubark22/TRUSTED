@@ -67,12 +67,14 @@ export function VoteRevealView() {
           {decided ? (
             <>
               <p className="verdict__label">The group chose</p>
-              <p className="verdict__name">{decided.name}</p>
+              <p className="verdict__name" dir="auto">
+                {decided.name}
+              </p>
             </>
           ) : outcome.kind === 'TIE' ? (
             <>
               <p className="verdict__label">The room is split</p>
-              <p className="verdict__name">
+              <p className="verdict__name" dir="auto">
                 {tiedCharacters.map((c) => c.name).join(' · ')}
               </p>
               <p className="verdict__note">
@@ -82,7 +84,7 @@ export function VoteRevealView() {
           ) : (
             <>
               <p className="verdict__label">The group could not agree</p>
-              <p className="verdict__name">
+              <p className="verdict__name" dir="auto">
                 {tiedCharacters.map((c) => c.name).join(' · ')}
               </p>
               <p className="verdict__note">The room stayed split. Nobody was chosen.</p>
