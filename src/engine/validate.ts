@@ -51,7 +51,7 @@ export function isGameState(value: unknown): value is GameState {
     isStringRecord(value.votes) &&
     isStringArray(value.revoteCandidates) &&
     typeof value.voteRevealStep === 'number' &&
-    typeof value.revealBeat === 'number' &&
+    typeof value.revealStep === 'number' &&
     (value.createdAt === null || typeof value.createdAt === 'number') &&
     (value.updatedAt === null || typeof value.updatedAt === 'number')
   );

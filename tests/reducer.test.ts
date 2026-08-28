@@ -132,16 +132,16 @@ describe('reduce', () => {
     expect(voteOutcome(state, CASE_001)).toEqual({ kind: 'DECIDED', characterId: target });
   });
 
-  it('steps through every truth beat before closing the case', () => {
+  it('steps through every authored truth before closing the case', () => {
     let state: GameState = { ...seatedGame(), phase: 'VOTE_REVEAL' };
     state = run(state, { type: 'SHOW_TRUTH' });
     expect(state.phase).toBe('TRUTH_REVEAL');
 
-    for (let i = 0; i < CASE_001.truthBeats.length - 1; i += 1) {
-      state = run(state, { type: 'ADVANCE_TRUTH_BEAT' });
+    for (let i = 0; i < CASE_001.truth.facts.length - 1; i += 1) {
+      state = run(state, { type: 'ADVANCE_REVEAL' });
       expect(state.phase).toBe('TRUTH_REVEAL');
     }
-    state = run(state, { type: 'ADVANCE_TRUTH_BEAT' });
+    state = run(state, { type: 'ADVANCE_REVEAL' });
     expect(state.phase).toBe('CASE_COMPLETE');
   });
 
@@ -161,7 +161,7 @@ describe('reduce', () => {
     state = readOutVotes(state);
     state = run(state, { type: 'SHOW_TRUTH' });
     while (state.phase === 'TRUTH_REVEAL') {
-      state = run(state, { type: 'ADVANCE_TRUTH_BEAT' });
+      state = run(state, { type: 'ADVANCE_REVEAL' });
     }
     expect(state.phase).toBe('CASE_COMPLETE');
 

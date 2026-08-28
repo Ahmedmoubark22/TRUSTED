@@ -762,6 +762,163 @@ h3 {
   color: var(--color-text-muted);
 }
 
+/* ------------------------------------------------------------------- truth */
+/*
+ * The payoff. One truth per screen, given room to land: the statement is the
+ * largest type in the product, and everything else defers to it.
+ */
+.truth {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-5);
+  animation: truth-in var(--duration-base) var(--ease-entrance) both;
+}
+
+.truth__explanation {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  text-wrap: pretty;
+  color: var(--color-text-muted);
+}
+
+.truth__refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.truth__ref {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+/* Objects had no face; they get the brass edge instead. */
+.truth__ref--object {
+  padding: var(--space-2) var(--space-3);
+  border-color: var(--color-accent-dim);
+}
+
+.truth__ref .portrait {
+  width: 28px;
+  height: 28px;
+  font-size: var(--text-sm);
+}
+
+.truth__ref-name {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.truth__count {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-faint);
+}
+
+/*
+ * The last truth carries more weight than the ones before it: it moves into
+ * the display face and full-strength text rather than growing, because it is
+ * also the longest and has the most to point back at.
+ */
+.truth--final .truth__explanation {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+}
+
+/* By the last step the count is noise — the button already says it is the end. */
+.truth--final .truth__count {
+  display: none;
+}
+
+/* What the room found. Stated once, then the story moves on. */
+.found {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) 0 var(--space-4) var(--space-4);
+  border-left: 2px solid var(--color-accent);
+}
+
+.found__line {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+}
+
+.found__note {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.found__turn {
+  padding-top: var(--space-2);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-accent);
+}
+
+.closing {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  text-wrap: balance;
+  color: var(--color-text-muted);
+}
+
+/* Who was who. A list, not four cards — it is a footnote, not the point. */
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roster__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.roster__character {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.roster__player {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+}
+
+.roster .portrait {
+  width: 32px;
+  height: 32px;
+  font-size: var(--text-sm);
+}
+
+@keyframes truth-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* -------------------------------------------------------------- dev tools */
 .devbar {
   position: sticky;

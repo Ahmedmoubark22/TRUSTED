@@ -13,7 +13,7 @@ export interface Player {
 }
 
 /** Bumped whenever the persisted shape of GameState changes. */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /**
  * The one authoritative game state. Every view reads from this; no view keeps
@@ -74,8 +74,8 @@ export interface GameState {
   revoteCandidates: CharacterId[];
   /** How many votes have been read out during VOTE_REVEAL. */
   voteRevealStep: number;
-  /** Index into the case's truth beats during TRUTH_REVEAL. */
-  revealBeat: number;
+  /** Index into the case's authored truth facts during TRUTH_REVEAL. */
+  revealStep: number;
   createdAt: number | null;
   updatedAt: number | null;
 }

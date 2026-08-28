@@ -5,7 +5,9 @@ import type {
   EvidenceDefinition,
   EvidenceFragment,
   EvidenceId,
+  TruthFact,
 } from '../content/types';
+import { factAt, interpretVote, isFinalStep, type TruthResult } from './truth';
 import {
   SEALED,
   isFullyUncovered,
@@ -311,4 +313,79 @@ export function charactersByIds(
 ): CharacterDefinition[] {
   if (!def) return [];
   return def.characters.filter((c) => ids.includes(c.id));
+}
+
+/* ------------------------------------------------------------------- truth */
+
+/**
+ * The one truth on screen right now, or nothing.
+ *
+ * Returns a single fact rather than the list-so-far. Later truths are not
+ * rendered-and-hidden; they never reach the component, so the reveal cannot
+ * be read ahead of itself out of the DOM. Outside TRUTH_REVEAL the answer is
+ * always nothing.
+ */
+export function currentTruthFact(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): TruthFact | undefined {
+  if (state.phase !== 'TRUTH_REVEAL' || !def) return undefined;
+  return factAt(def.truth, state.revealStep);
+}
+
+export interface RevealProgress {
+  /** 1-based, for display. */
+  step: number;
+  total: number;
+  isFinal: boolean;
+}
+
+export function revealProgress(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): RevealProgress {
+  const total = def?.truth.facts.length ?? 0;
+  return {
+    step: Math.min(state.revealStep + 1, total),
+    total,
+    isFinal: def ? isFinalStep(def.truth, state.revealStep) : false,
+  };
+}
+
+/**
+ * What the room found, from its actual vote and the authored answer.
+ *
+ * Note what this cannot do: it reads the vote, it never writes it, and it has
+ * no say in which truths get revealed.
+ */
+export function caseResult(state: GameState, def: CaseDefinition | undefined): TruthResult {
+  if (!def) return 'MISSED_IMMEDIATE_TRUTH';
+  return interpretVote(voteOutcome(state, def), def.truth);
+}
+
+/** The character the room settled on, if it settled on one. */
+export function chosenCharacter(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): CharacterDefinition | undefined {
+  const outcome = voteOutcome(state, def);
+  if (outcome.kind !== 'DECIDED') return undefined;
+  return charactersByIds(def, [outcome.characterId])[0];
+}
+
+/** The character the case says took the letter. */
+export function immediateAnswerCharacter(
+  def: CaseDefinition | undefined,
+): CharacterDefinition | undefined {
+  if (!def) return undefined;
+  return charactersByIds(def, [def.truth.immediateAnswerCharacterId])[0];
+}
+
+/** Evidence a truth points back at — placed objects only, by construction. */
+export function factEvidence(
+  def: CaseDefinition | undefined,
+  fact: TruthFact | undefined,
+): EvidenceDefinition[] {
+  if (!def || !fact) return [];
+  return def.evidence.filter((e) => fact.relatedEvidenceIds.includes(e.id));
 }

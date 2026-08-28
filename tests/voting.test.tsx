@@ -269,13 +269,17 @@ describe('10–11 · the round completes and is counted', () => {
     const outcome = voteOutcome(state, CASE_001);
     expect(Object.keys(outcome).sort()).toEqual(['characterId', 'kind']);
 
-    // And the resolution the judgement would need is still unauthored, so
-    // nothing downstream is quietly reading it.
-    expect(CASE_001.culpritCharacterId).toBeNull();
+    // The vote screen names who the room chose and stops there — the truth
+    // it will be measured against lives in the case, not in this phase.
+    const answer = CASE_001.truth.immediateAnswerCharacterId;
+    expect(html).not.toContain(CASE_001.truth.facts[0]!.statement);
+
+    // And the ending never grades the table, whichever way the vote went.
     const closed = render({ ...state, phase: 'CASE_COMPLETE' as const });
-    for (const claim of ['was right', 'was wrong', 'correct', 'incorrect']) {
+    for (const claim of ['was right', 'was wrong', 'correct', 'incorrect', 'you win']) {
       expect(closed.toLowerCase()).not.toContain(claim);
     }
+    expect(answer).toBe('omar');
   });
 });
 

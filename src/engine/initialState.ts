@@ -41,7 +41,7 @@ export function createInitialState(): GameState {
     votes: {},
     revoteCandidates: [],
     voteRevealStep: 0,
-    revealBeat: 0,
+    revealStep: 0,
     createdAt: null,
     updatedAt: null,
   };

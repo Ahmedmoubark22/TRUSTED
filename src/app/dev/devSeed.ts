@@ -53,13 +53,17 @@ export function createDevGame(phase: GamePhase, playerCount = DEV_PLAYERS): Game
   }
 
   // From the vote reveal onward there must be a completed ballot. Votes name
-  // characters, and nobody may name themselves — so seat 0 names the second
-  // character and everyone else names the third, giving a clear winner.
+  // characters, and nobody may name themselves — so the room lands on the
+  // character the case's truth actually points at, which is the interesting
+  // case to inspect.
   if (phaseIsAtOrAfter(phase, 'VOTE_REVEAL')) {
+    const answer = CASE_001.truth.immediateAnswerCharacterId;
+    const fallback = CASE_001.characters.find((c) => c.id !== answer);
     const votes: Record<PlayerId, string> = {};
     players.forEach((player, i) => {
-      const target = CASE_001.characters[i === 2 ? 1 : 2];
-      if (target) votes[player.id] = target.id;
+      // Whoever was dealt the answer has to name somebody else.
+      const own = CASE_001.characters[i]?.id;
+      votes[player.id] = own === answer ? (fallback?.id ?? answer) : answer;
     });
     state.votes = votes;
     // Land on the finished reveal rather than mid-readout.

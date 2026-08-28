@@ -9,7 +9,7 @@
 export type CaseId = string;
 export type CharacterId = string;
 export type EvidenceId = string;
-export type TruthBeatId = string;
+export type TruthFactId = string;
 
 /**
  * A role a player can be dealt.
@@ -98,11 +98,55 @@ export interface EvidenceDefinition {
   discussionPrompt?: string;
 }
 
-/** One step of the layered truth reveal. */
-export interface TruthBeatDefinition {
-  id: TruthBeatId;
-  title: string;
-  body: string;
+/**
+ * How much weight a fact carries.
+ *
+ * `immediate` is the thing the table was actually asked to work out, so it is
+ * the only one the group's vote can be measured against. `core` and `deeper`
+ * are the layers underneath it — the parts a correct vote still does not buy
+ * you, which is the whole point of the reveal.
+ */
+export const TRUTH_IMPORTANCE = ['immediate', 'core', 'deeper'] as const;
+
+export type TruthImportance = (typeof TRUTH_IMPORTANCE)[number];
+
+/**
+ * One authored truth, and one step of the reveal.
+ *
+ * Content states what is true; the engine only decides which one is on screen.
+ * Nothing here is computed from how the table voted — a case reveals the same
+ * truth whoever it accused.
+ */
+export interface TruthFact {
+  id: TruthFactId;
+  /** What the step opens by asking. */
+  question: string;
+  /** The answer, said plainly. This is the line that carries the screen. */
+  statement: string;
+  importance: TruthImportance;
+  /** Objects on the table that pointed at this. May be empty. */
+  relatedEvidenceIds: EvidenceId[];
+  /** Whose truth this is. May be empty. */
+  relatedCharacterIds: CharacterId[];
+  /** Position in the reveal. Ascending, contiguous from 0. */
+  revealOrder: number;
+  /** The context behind the statement. */
+  explanation: string;
+}
+
+/** A case's authored resolution. */
+export interface CaseTruth {
+  /**
+   * The character at the centre of the immediate truth — here, whoever took
+   * the letter. The reveal compares the group's vote against this to describe
+   * what they found. Naming them is not a verdict, and this case's answer is
+   * deliberately not a villain.
+   */
+  immediateAnswerCharacterId: CharacterId;
+  /** The fact that names them. Must be the `immediate` one. */
+  immediateFactId: TruthFactId;
+  /** Every layer, in reveal order. */
+  facts: TruthFact[];
 }
 
 /** The authored, public definition of a playable case. */
@@ -118,13 +162,8 @@ export interface CaseDefinition {
   estimatedMinutes: number;
   characters: CharacterDefinition[];
   evidence: EvidenceDefinition[];
-  /** Ordered beats played out during TRUTH_REVEAL. */
-  truthBeats: TruthBeatDefinition[];
-  /**
-   * The character who is actually responsible. `null` while the case's
-   * resolution has not been authored yet — the reveal step will set this.
-   */
-  culpritCharacterId: CharacterId | null;
+  /** The authored resolution, played out during TRUTH_REVEAL. */
+  truth: CaseTruth;
   /** True while any part of the case is still scaffolding. */
   isPlaceholder: boolean;
 }

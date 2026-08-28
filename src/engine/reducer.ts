@@ -270,19 +270,18 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
     }
 
     case 'SHOW_TRUTH':
-      return go(state, 'TRUTH_REVEAL', ctx, { revealBeat: 0 });
+      return go(state, 'TRUTH_REVEAL', ctx, { revealStep: 0 });
 
-    case 'ADVANCE_TRUTH_BEAT': {
+    case 'ADVANCE_REVEAL': {
       if (state.phase !== 'TRUTH_REVEAL') return state;
       const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
-      const total = def?.truthBeats.length ?? 0;
-      const next = state.revealBeat + 1;
-      if (next < total) return touch({ ...state, revealBeat: next }, ctx);
+      const total = def?.truth.facts.length ?? 0;
+      const next = state.revealStep + 1;
+      // Walking off the last truth is the only way the case closes, so the
+      // room cannot reach the ending without having heard all of it.
+      if (next < total) return touch({ ...state, revealStep: next }, ctx);
       return go(state, 'CASE_COMPLETE', ctx);
     }
-
-    case 'COMPLETE_CASE':
-      return go(state, 'CASE_COMPLETE', ctx);
 
     case 'DEV_JUMP_TO_PHASE':
       // Deliberately bypasses the transition table. Dev bar only.

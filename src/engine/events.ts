@@ -76,8 +76,12 @@ export type GameEvent =
   /** Read out the next vote. The result appears once they have all been read. */
   | { type: 'ADVANCE_VOTE_REVEAL' }
   | { type: 'SHOW_TRUTH' }
-  | { type: 'ADVANCE_TRUTH_BEAT' }
-  | { type: 'COMPLETE_CASE' }
+  /**
+   * Move to the next authored truth. Walking off the final one closes the
+   * case — there is deliberately no separate "finish" event, so the ending
+   * cannot be reached without going through the whole reveal.
+   */
+  | { type: 'ADVANCE_REVEAL' }
 
   /**
    * Dev/test only. Bypasses the transition table so the phase walkthrough can

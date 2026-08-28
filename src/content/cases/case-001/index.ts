@@ -5,13 +5,13 @@
  * first three objects are approved prototype content (see `./characters.ts`,
  * `./briefings.ts` and `./evidence.ts`).
  *
- * What is left in this file — intro, truth beats, resolution — is still
- * PLACEHOLDER scaffolding, kept only so the later phases have something
- * structurally valid to render. It is replaced in the reveal step.
+ * The resolution is authored in `./truth.ts`. What is left as PLACEHOLDER in
+ * this file is the case intro, which belongs to a later content pass.
  */
 import type { CaseDefinition } from '../../types';
 import { CASE_001_CHARACTERS } from './characters';
 import { CASE_001_EVIDENCE } from './evidence';
+import { CASE_001_TRUTH } from './truth';
 
 export const CASE_001: CaseDefinition = {
   id: 'case-001',
@@ -33,26 +33,8 @@ export const CASE_001: CaseDefinition = {
 
   evidence: CASE_001_EVIDENCE,
 
-  truthBeats: [
-    {
-      id: 't1',
-      title: 'PLACEHOLDER — What you were told',
-      body: 'PLACEHOLDER — first layer of the reveal.',
-    },
-    {
-      id: 't2',
-      title: 'PLACEHOLDER — What actually happened',
-      body: 'PLACEHOLDER — second layer of the reveal.',
-    },
-    {
-      id: 't3',
-      title: 'PLACEHOLDER — Why nobody said it',
-      body: 'PLACEHOLDER — final layer of the reveal.',
-    },
-  ],
+  truth: CASE_001_TRUTH,
 
-  // Deliberately unauthored. The case's resolution is not part of this step,
-  // and guessing one would invent story that has not been approved.
-  culpritCharacterId: null,
+  // Still true: the case intro is scaffolding. Everything else is authored.
   isPlaceholder: true,
 };
