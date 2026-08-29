@@ -30,7 +30,13 @@ import { DECISION_QUESTION, decisionQuestionFor } from '../src/engine/voting';
 
 /* --------------------------------------------------------------- machinery */
 
-const ctx: EngineContext = { now: () => 1_000, random: () => 0.42, getCase };
+let sessions = 0;
+const ctx: EngineContext = {
+  now: () => 1_000,
+  random: () => 0.42,
+  newSessionId: () => `case002-session-${(sessions += 1)}`,
+  getCase,
+};
 
 const ANSWER: CharacterId = 'mostafa';
 

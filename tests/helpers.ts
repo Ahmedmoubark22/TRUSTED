@@ -8,10 +8,21 @@ import { createInitialState } from '../src/engine/initialState';
 import { reduce } from '../src/engine/reducer';
 import type { EngineContext, GameState } from '../src/engine/types';
 
-/** Deterministic context: fixed clock, fixed RNG, real case content. */
+/**
+ * Deterministic context: fixed clock, fixed RNG, counted session ids, real
+ * case content. Ids are sequential rather than random so a test can assert
+ * that two games really did get different sessions.
+ */
+let sessionCounter = 0;
+
+export function resetSessionCounter(): void {
+  sessionCounter = 0;
+}
+
 export const ctx: EngineContext = {
   now: () => 1_000,
   random: () => 0.42,
+  newSessionId: () => `session-${(sessionCounter += 1)}`,
   getCase,
 };
 

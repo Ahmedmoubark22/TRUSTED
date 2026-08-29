@@ -360,6 +360,63 @@ h3 {
   line-height: var(--leading-snug);
 }
 
+/*
+ * The confrontation A/B, inside the goal section.
+ *
+ * Two lines of authored text, not a control: no button, no selected state,
+ * nothing that could read as "the app is recording my answer". The key sits in
+ * the margin on the logical start edge so it moves with an Arabic briefing.
+ */
+.confront {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.confront__intro {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-muted);
+}
+
+.confront__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Logical, not left. The list carries `dir="auto"`, so an Arabic option puts
+   its marker on the right and an English one on the left, with no branch. */
+.confront__option {
+  position: relative;
+  padding-inline-start: var(--space-5);
+  line-height: var(--leading-snug);
+  /* Belt and braces against a long unbroken token widening the 375px column. */
+  overflow-wrap: anywhere;
+}
+
+.confront__option::before {
+  position: absolute;
+  inset-inline-start: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  color: var(--color-accent);
+}
+
+.confront__option--a::before {
+  content: 'A';
+}
+
+.confront__option--b::before {
+  content: 'B';
+}
+
 /* The gate and the pass screen: deliberately empty of content. */
 .lock {
   margin: var(--space-7) 0;
@@ -661,6 +718,54 @@ h3 {
   animation: section-in var(--duration-base) var(--ease-entrance) both;
 }
 
+/* -------------------------------------------------------------- accusation */
+/*
+ * What the room is saying. Deliberately not styled like the verdict: a brass
+ * edge and a name, but no portrait, no tally and no finality. It has to read
+ * as a sentence somebody said, not as a result.
+ */
+.accusation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4) 0;
+  border-inline-start: 2px solid var(--color-accent-dim);
+  animation: section-in var(--duration-base) var(--ease-entrance) both;
+}
+
+.accusation__label {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.accusation__name {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+.accusation__note {
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--color-text-muted);
+}
+
+/* The same fact on the shared table, reduced to one quiet line. */
+.table__accusation {
+  padding-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.table__accusation-name {
+  font-family: var(--font-display);
+  color: var(--color-text);
+}
+
 /* ---------------------------------------------------------------- decision */
 .decision {
   display: flex;
@@ -669,6 +774,21 @@ h3 {
   justify-content: center;
   gap: var(--space-5);
   padding: var(--space-6) 0;
+}
+
+/*
+ * The confrontation announcement, for cases that run one. Sits above the
+ * question and reads as an instruction to the room rather than as the thing
+ * being asked, so it is quieter and smaller than the question below it.
+ */
+.decision__confrontation {
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4) 0;
+  border-inline-start: 2px solid var(--color-accent-dim);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  text-wrap: pretty;
+  color: var(--color-text-muted);
 }
 
 .decision__question {
@@ -775,12 +895,14 @@ h3 {
   list-style: none;
 }
 
-/* Sized so four votes plus the verdict clear a 375x812 phone. */
+/* Sized so four votes, the verdict and the accused/chosen pair all clear a
+   375x812 phone together — the contrast only works if both rows are visible
+   at once. */
 .tally__line {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-1) 0;
+  padding: 0;
   /* Each vote lands on its own beat. */
   animation: section-in var(--duration-base) var(--ease-entrance) both;
 }
@@ -799,11 +921,87 @@ h3 {
   color: var(--color-accent);
 }
 
+/*
+ * Beat one of the ending: the name the room had talked itself into, alone on
+ * the screen. Centred and unhurried — it is the last moment before the votes
+ * make it either prescient or beside the point.
+ */
+.accused {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-7) 0;
+  animation: section-in var(--duration-base) var(--ease-entrance) both;
+}
+
+.accused .portrait {
+  width: 64px;
+  height: 64px;
+  font-size: var(--text-2xl);
+}
+
+.accused__name {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* The two facts side by side. A ledger, not a scoreboard. */
+/* Tight to the verdict above it: the two rows are one thought, and they have
+   to be readable together on a 375x812 phone without scrolling between them. */
+.contrast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-top: var(--space-3);
+  animation: section-in var(--duration-base) var(--ease-entrance) both;
+}
+
+.contrast__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.contrast__label {
+  flex: none;
+  width: 5rem;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.contrast__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+/*
+ * They named one person and chose another. Marked, never narrated: the rule
+ * and the colour say "these are two different answers" and stop there.
+ */
+.contrast--diverged {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--color-accent);
+}
+
+.contrast--diverged .contrast__label {
+  color: var(--color-accent);
+}
+
 .verdict {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding-top: var(--space-5);
+  padding-top: var(--space-4);
   border-top: 1px solid var(--color-border);
   text-align: center;
   animation: section-in var(--duration-base) var(--ease-entrance) both;

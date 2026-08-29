@@ -1,6 +1,17 @@
 import type { ReactNode } from 'react';
-import { PHASE_META } from '../engine/phases';
+import { PHASE_META, type PhaseMeta } from '../engine/phases';
 import { useGameState } from './hooks';
+
+/**
+ * The header for a session waiting to be picked up. The phase underneath is
+ * still VOTING, and saying so here would tell the room the device is on a
+ * ballot when it is not.
+ */
+const RECOVERY_META: PhaseMeta = {
+  title: 'Unfinished',
+  hint: 'This game was left part-way.',
+  isPrivate: false,
+};
 
 interface AppShellProps {
   children: ReactNode;
@@ -14,7 +25,7 @@ interface AppShellProps {
  */
 export function AppShell({ children, footer }: AppShellProps) {
   const state = useGameState();
-  const meta = PHASE_META[state.phase];
+  const meta = state.recoveryRequired ? RECOVERY_META : PHASE_META[state.phase];
 
   return (
     <div className="app">

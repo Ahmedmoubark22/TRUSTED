@@ -18,6 +18,7 @@ import {
   votableCharacterIds,
 } from '../src/engine/selectors';
 import { DECISION_QUESTION, leadingCharacters, resolveVote, tallyVotes } from '../src/engine/voting';
+import { sessionStorageKey } from '../src/engine/session';
 import type { GameState } from '../src/engine/types';
 import { createGamePersistence } from '../src/persistence/gameStorage';
 import { createMemoryStore } from '../src/persistence/storage';
@@ -424,7 +425,7 @@ describe('18 · a reload cannot expose a private vote', () => {
     const open = run(atVoting(), { type: 'UNLOCK_VOTE' });
     persistence.save(open);
 
-    const raw = JSON.parse(store.get('trusted.game') ?? '{}');
+    const raw = JSON.parse(store.get(sessionStorageKey(open.sessionId!)) ?? '{}');
     expect(raw.votes).toEqual({});
     expect(Object.keys(raw)).not.toContain('selectedCharacterId');
     expect(Object.keys(raw)).not.toContain('pendingVote');
@@ -442,9 +443,34 @@ describe('18 · a reload cannot expose a private vote', () => {
     const persistence = createGamePersistence(store);
     persistence.save(run(atVoting(), { type: 'UNLOCK_VOTE' }));
 
-    const reopened = run(persistence.load()!, { type: 'UNLOCK_VOTE' });
+    // A reopened vote is now handed back deliberately: the table picks the
+    // session up first, and only then can the seat open its ballot.
+    const restored = persistence.load()!;
+    expect(restored.recoveryRequired).toBe(true);
+    expect(run(restored, { type: 'UNLOCK_VOTE' })).toBe(restored);
+
+    const reopened = run(restored, { type: 'RESUME_SESSION' }, { type: 'UNLOCK_VOTE' });
     expect(reopened.voteResumed).toBe(false);
     expect(ballotOptions(reopened, CASE_001)).toHaveLength(3);
+  });
+
+  it('puts a recovery choice on screen instead of a ballot', () => {
+    const store = createMemoryStore();
+    const persistence = createGamePersistence(store);
+    persistence.save(run(atVoting(), { type: 'UNLOCK_VOTE' }));
+
+    const html = render(persistence.load()!);
+
+    // The table is asked, in the product's own voice.
+    expect(html).toContain('استكمال اللعبة؟');
+    expect(html).toContain('Continue this game');
+    expect(html).toContain('Start the case again');
+    // And no part of the vote is on the page: no ballot, no question, no
+    // header claiming the device is mid-vote.
+    expect(html).not.toContain(DECISION_QUESTION);
+    expect(html).not.toContain('ballot__option');
+    expect(html).not.toContain('Lock vote');
+    expect(html).not.toContain('Pass the device. One player only.');
   });
 });
 

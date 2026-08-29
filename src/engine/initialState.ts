@@ -23,9 +23,18 @@ export function makePlayers(count: number): Player[] {
   return Array.from({ length: count }, (_, seat) => makePlayer(seat));
 }
 
+/**
+ * A fresh state with no session behind it.
+ *
+ * Deliberately free of a session id: HOME is not a game. The id is minted when
+ * a case is opened, which keeps this function pure and keeps "no game running"
+ * representable rather than implied.
+ */
 export function createInitialState(): GameState {
   return {
     schemaVersion: SCHEMA_VERSION,
+    sessionId: null,
+    recoveryRequired: false,
     phase: 'HOME',
     caseId: null,
     players: [],
@@ -38,6 +47,9 @@ export function createInitialState(): GameState {
     voteCursor: 0,
     voteStep: 'LOCKED',
     voteResumed: false,
+    // Never inferred from evidence, briefings, truth or a previous session.
+    // Every session starts with the room having accused nobody.
+    accusation: null,
     votes: {},
     revoteCandidates: [],
     voteRevealStep: 0,

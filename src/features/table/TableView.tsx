@@ -1,5 +1,5 @@
 import { Button, Screen } from '../../components';
-import { hasUnplacedEvidence, tableEvidence } from '../../engine/selectors';
+import { accusedCharacter, hasUnplacedEvidence, tableEvidence } from '../../engine/selectors';
 import { useCaseDefinition, useDispatch, useGameState } from '../../app/hooks';
 
 /**
@@ -19,6 +19,7 @@ export function TableView() {
 
   const placed = tableEvidence(state, def);
   const more = hasUnplacedEvidence(state, def);
+  const accused = accusedCharacter(state, def);
 
   return (
     <Screen
@@ -53,6 +54,19 @@ export function TableView() {
           ))}
         </ol>
       )}
+
+      {/* Read-only here. The table is the shared record of where the room has
+          got to, and who it is currently naming is part of that — but changing
+          it belongs to the conversation, not to this screen. */}
+      {accused ? (
+        <p className="table__accusation">
+          The room is naming{' '}
+          <span className="table__accusation-name" dir="auto">
+            {accused.name}
+          </span>
+          . Not a vote.
+        </p>
+      ) : null}
     </Screen>
   );
 }

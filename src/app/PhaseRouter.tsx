@@ -13,6 +13,7 @@ import { VotingView } from '../features/voting/VotingView';
 import { VoteRevealView } from '../features/reveal/VoteRevealView';
 import { TruthRevealView } from '../features/reveal/TruthRevealView';
 import { CaseCompleteView } from '../features/reveal/CaseCompleteView';
+import { SessionRecoveryView } from '../features/session/SessionRecoveryView';
 import { useGameState } from './hooks';
 
 /**
@@ -36,7 +37,11 @@ const VIEWS: Record<GamePhase, ComponentType> = {
 };
 
 export function PhaseRouter() {
-  const { phase } = useGameState();
+  const state = useGameState();
+  const { phase } = state;
+  // A session waiting to be picked up outranks its own phase: the table is
+  // asked before the game is handed back, so no phase view renders at all.
+  if (state.recoveryRequired) return <SessionRecoveryView />;
   const View = VIEWS[phase];
   // Remount on phase change so per-screen entrance motion and local
   // handoff state (e.g. "I am Ana") reset cleanly.

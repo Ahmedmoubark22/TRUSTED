@@ -10,6 +10,7 @@ import {
 import { currentBriefingPlayer, revealableCharacterId } from '../src/engine/selectors';
 import { createGamePersistence } from '../src/persistence/gameStorage';
 import { createMemoryStore } from '../src/persistence/storage';
+import { sessionStorageKey } from '../src/engine/session';
 import { briefOnePlayer, ctx, readBriefing, run, seatedGame } from './helpers';
 import { reduce } from '../src/engine/reducer';
 
@@ -274,9 +275,12 @@ describe('8 · a reload cannot expose an open briefing', () => {
   it('never writes private content to storage in the first place', () => {
     const store = createMemoryStore();
     const persistence = createGamePersistence(store);
-    persistence.save(run(seatedGame(), { type: 'UNLOCK_BRIEFING' }));
+    const open = run(seatedGame(), { type: 'UNLOCK_BRIEFING' });
+    persistence.save(open);
 
-    const raw = store.get('trusted.game') ?? '';
+    const raw = store.get(sessionStorageKey(open.sessionId!));
+    // Guard against the assertion below passing because nothing was written.
+    expect(raw).not.toBeNull();
     // State records who is being briefed and how far they have read — never
     // what it said. Nothing recoverable should survive in storage.
     for (const briefing of Object.values(CASE_001_BRIEFINGS)) {

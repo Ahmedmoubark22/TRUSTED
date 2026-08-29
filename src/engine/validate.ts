@@ -35,6 +35,8 @@ export function isGameState(value: unknown): value is GameState {
   if (!isRecord(value)) return false;
   return (
     value.schemaVersion === SCHEMA_VERSION &&
+    (value.sessionId === null || typeof value.sessionId === 'string') &&
+    typeof value.recoveryRequired === 'boolean' &&
     isPhase(value.phase) &&
     (value.caseId === null || typeof value.caseId === 'string') &&
     Array.isArray(value.players) &&
@@ -48,6 +50,7 @@ export function isGameState(value: unknown): value is GameState {
     typeof value.voteCursor === 'number' &&
     isVoteStep(value.voteStep) &&
     typeof value.voteResumed === 'boolean' &&
+    (value.accusation === null || typeof value.accusation === 'string') &&
     isStringRecord(value.votes) &&
     isStringArray(value.revoteCandidates) &&
     typeof value.voteRevealStep === 'number' &&

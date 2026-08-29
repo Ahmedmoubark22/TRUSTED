@@ -44,6 +44,33 @@ export interface PrivateBriefing {
   hiding: string[];
   /** "Your goal…" */
   goal: string;
+  /**
+   * The two things this character may say in the confrontation round, if the
+   * case runs one. Omitted means the case has no such round.
+   *
+   * Private, like the rest of this record, and read once — at briefing time,
+   * by the one player it belongs to. The confrontation itself is a beat of the
+   * conversation rather than a phase: the app announces it (see
+   * `CaseDefinition.confrontationPrompt`) and the player picks from what they
+   * were given here. No event, no state, nothing to persist.
+   */
+  confrontation?: BriefingConfrontation;
+}
+
+/**
+ * One character's A/B choice for the confrontation round.
+ *
+ * A protects the speaker; B puts pressure on somebody else. Both are authored
+ * to cost something, and neither may name the culprit — a case that resolves
+ * itself in this round has replaced its own vote.
+ */
+export interface BriefingConfrontation {
+  /** How the choice is framed to this player. */
+  intro: string;
+  /** A — protects or stabilises the speaker. */
+  optionA: string;
+  /** B — creates pressure on somebody else. */
+  optionB: string;
 }
 
 /**
@@ -193,6 +220,16 @@ export interface CaseDefinition {
    * Case 001 uses.
    */
   decisionQuestion?: string;
+  /**
+   * The one line the app says before the decision, if this case runs a
+   * confrontation round.
+   *
+   * Structural facilitation and nothing else: it announces the beat and states
+   * the rule — one choice each, not both. What each player may actually say is
+   * private, and stays in their own briefing. Omitted means no such round,
+   * which is what Cases 001 and 002 do.
+   */
+  confrontationPrompt?: string;
   /** The authored resolution, played out during TRUTH_REVEAL. */
   truth: CaseTruth;
   /** True while any part of the case is still scaffolding. */

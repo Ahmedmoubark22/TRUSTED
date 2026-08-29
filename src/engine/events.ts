@@ -10,6 +10,18 @@ export type GameEvent =
   // Session
   | { type: 'RESET' }
   | { type: 'HYDRATE'; state: unknown }
+  /**
+   * "Pick it back up" — the table chooses to carry on with a session that was
+   * interrupted somewhere private. Clears the recovery gate and nothing else:
+   * locked votes, evidence and roles all survive exactly as they were.
+   */
+  | { type: 'RESUME_SESSION' }
+  /**
+   * "Start this case again" — the table chooses to abandon the interrupted
+   * session. A brand-new session id is minted for the same case, so none of
+   * the old group's progress carries over. Never automatic.
+   */
+  | { type: 'RESTART_SESSION' }
 
   // HOME -> CASE_INTRO
   | { type: 'SELECT_CASE'; caseId: CaseId }
@@ -58,6 +70,15 @@ export type GameEvent =
   | { type: 'DISCUSSION_COMPLETE' }
   | { type: 'READY_TO_DECIDE' }
   | { type: 'RETURN_TO_TABLE' }
+
+  // ACCUSATION
+  /**
+   * "We think it was —". What the room is currently arguing, which is not a
+   * vote and does not become one: dispatching this can never cast, lock or
+   * alter a ballot. Sending it again simply replaces the standing accusation,
+   * because a table changes its mind out loud.
+   */
+  | { type: 'SET_ACCUSATION'; characterId: CharacterId }
 
   // VOTING
   | { type: 'START_VOTING' }

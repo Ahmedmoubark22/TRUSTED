@@ -8,7 +8,13 @@ import { reduce } from '../src/engine/reducer';
 import { createInitialState } from '../src/engine/initialState';
 import { createDevGame } from '../src/app/dev/devSeed';
 
-const ctx: EngineContext = { now: () => 1_000, random: () => 0.42, getCase };
+let sessions = 0;
+const ctx: EngineContext = {
+  now: () => 1_000,
+  random: () => 0.42,
+  newSessionId: () => `store-session-${(sessions += 1)}`,
+  getCase,
+};
 
 describe('game store', () => {
   it('notifies subscribers and persists only when state actually changes', () => {

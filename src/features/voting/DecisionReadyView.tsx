@@ -30,6 +30,15 @@ export function DecisionReadyView() {
       }
     >
       <div className="decision">
+        {/* Act 6, for the cases that author one. Structural facilitation only:
+            it announces the beat and states the rule. What each player may
+            actually say is private and stays in their own briefing, so this
+            line can be read aloud by anyone without leaking anything. */}
+        {def?.confrontationPrompt ? (
+          <p className="decision__confrontation" dir="auto">
+            {def.confrontationPrompt}
+          </p>
+        ) : null}
         <p className="decision__question" dir="auto">
           {decisionQuestionFor(def)}
         </p>

@@ -1,6 +1,7 @@
 import type { CaseDefinition, CaseId, CharacterId, EvidenceId } from '../content/types';
 import type { BriefingStep } from './briefing';
 import type { GamePhase } from './phases';
+import type { SessionId } from './session';
 import type { VoteStep } from './voting';
 
 export type PlayerId = string;
@@ -13,7 +14,7 @@ export interface Player {
 }
 
 /** Bumped whenever the persisted shape of GameState changes. */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 7;
 
 /**
  * The one authoritative game state. Every view reads from this; no view keeps
@@ -26,6 +27,25 @@ export const SCHEMA_VERSION = 5;
  */
 export interface GameState {
   schemaVersion: number;
+  /**
+   * Which play-through this state belongs to, or `null` at HOME where no game
+   * is running.
+   *
+   * Minted when a case is opened and never reused. Everything below is *this
+   * group's* progress through *this* case, which is why the whole record is
+   * stored under this id rather than under one key per browser.
+   */
+  sessionId: SessionId | null;
+  /**
+   * True when a restored session must be handed back deliberately rather than
+   * resumed on the spot.
+   *
+   * Set only by the loader, and only for a session interrupted somewhere the
+   * app must not put a player straight back into — a private vote in progress.
+   * The votes already locked in are untouched; this only decides whether the
+   * table walks back in or is asked first.
+   */
+  recoveryRequired: boolean;
   phase: GamePhase;
   caseId: CaseId | null;
   players: Player[];
@@ -62,6 +82,19 @@ export interface GameState {
    */
   voteResumed: boolean;
   /**
+   * Who the table has been arguing is responsible, or `null` if it has not
+   * settled on anyone.
+   *
+   * An accusation is not a vote and never becomes one. It is what the room
+   * *says* during the investigation — revisable, non-binding, and held by the
+   * group rather than by a seat. A table can spend the whole case accusing
+   * سعاد and still name مصطفى on the ballot, and both of those facts matter.
+   *
+   * Kept deliberately bare: one character, no timestamp, no reason, no
+   * history. Anything richer is a later decision, not this one.
+   */
+  accusation: CharacterId | null;
+  /**
    * voterId -> the character they named. Only *locked* votes are here; a
    * selection still being considered never leaves the voting screen, so it is
    * neither stored nor persisted.
@@ -88,5 +121,7 @@ export interface EngineContext {
   now: () => number;
   /** Uniform in [0, 1). Injectable so role dealing is deterministic in tests. */
   random: () => number;
+  /** A fresh session id. Injectable so session identity is fixed in tests. */
+  newSessionId: () => SessionId;
   getCase: (caseId: CaseId) => CaseDefinition | undefined;
 }

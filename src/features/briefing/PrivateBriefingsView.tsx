@@ -9,7 +9,7 @@ import {
   type BriefingSection,
 } from '../../engine/briefing';
 import { currentBriefingPlayer, nextBriefingPlayer } from '../../engine/selectors';
-import type { PrivateBriefing } from '../../content/types';
+import type { BriefingConfrontation, PrivateBriefing } from '../../content/types';
 
 /**
  * One briefing experience, driven entirely by data.
@@ -130,7 +130,39 @@ function BriefingSectionBlock({
           ))}
         </ul>
       )}
+      {/* The confrontation A/B rides on the goal, because it *is* the goal
+          played out: the last thing this player says before the vote. Cases
+          that author no confrontation render nothing extra. */}
+      {section === 'GOAL' && briefing.confrontation ? (
+        <Confrontation choice={briefing.confrontation} />
+      ) : null}
     </section>
+  );
+}
+
+/**
+ * Two lines, one choice, read once by one pair of hands.
+ *
+ * Deliberately not a control. Nothing is tapped, nothing is recorded, and the
+ * engine never learns which one was spent — the player says it out loud at the
+ * table, and the room reacts to a sentence rather than to a UI state.
+ */
+function Confrontation({ choice }: { choice: BriefingConfrontation }) {
+  return (
+    <div className="confront">
+      <p className="confront__intro" dir="auto">
+        {choice.intro}
+      </p>
+      {/* Same idiom as `briefing__list`: `dir="auto"` on the list, so an Arabic
+          briefing flips the whole thing, and the A/B marker — drawn in CSS
+          rather than in the DOM — moves to the reading edge with it. Putting
+          the letters in the markup would make them the first strong character
+          and force every option left. */}
+      <ul className="confront__options" dir="auto">
+        <li className="confront__option confront__option--a">{choice.optionA}</li>
+        <li className="confront__option confront__option--b">{choice.optionB}</li>
+      </ul>
+    </div>
   );
 }
 

@@ -1,9 +1,16 @@
 import type { EvidenceDefinition } from '../content/types';
+import { isAccusationPhase } from './accusation';
 import type { GameEvent } from './events';
 import { nextBriefingStep } from './briefing';
 import { SEALED, isFullyUncovered, nextEvidenceId } from './evidence';
 import { canTransition, type GamePhase } from './phases';
-import { currentBriefingCharacterId, currentVoter, voteOutcome, votableCharacterIds } from './selectors';
+import {
+  activeCharacterIds,
+  currentBriefingCharacterId,
+  currentVoter,
+  voteOutcome,
+  votableCharacterIds,
+} from './selectors';
 import { MAX_PLAYERS, MIN_PLAYERS, createInitialState, makePlayer, makePlayers } from './initialState';
 import type { EngineContext, GameState } from './types';
 import { migrate } from './validate';
@@ -21,7 +28,24 @@ const CLOSED_BRIEFING = { briefingStep: 'LOCKED', briefingResumed: false } as co
 /** The same, for the private vote. */
 const CLOSED_VOTE = { voteStep: 'LOCKED', voteResumed: false } as const;
 
+/**
+ * What may be dispatched while a restored session is waiting to be picked up.
+ *
+ * The recovery gate is enforced here rather than only in the view, for the
+ * same reason the briefing and vote gates are: a screen can be bypassed, the
+ * reducer cannot. Until the table answers, the interrupted game accepts
+ * nothing that could advance or alter it.
+ */
+const RECOVERY_EVENTS: ReadonlySet<GameEvent['type']> = new Set([
+  'RESUME_SESSION',
+  'RESTART_SESSION',
+  'RESET',
+  'HYDRATE',
+]);
+
 export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): GameState {
+  if (state.recoveryRequired && !RECOVERY_EVENTS.has(event.type)) return state;
+
   switch (event.type) {
     case 'RESET':
       return createInitialState();
@@ -33,8 +57,34 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
       const def = ctx.getCase(event.caseId);
       if (!def) return state;
       if (!canTransition(state.phase, 'CASE_INTRO')) return state;
+      // Opening a case *is* the start of a session, so this is the one place a
+      // session id is minted. Built from a fresh initial state, so nothing
+      // from a previous game can survive into this one.
       return {
         ...createInitialState(),
+        sessionId: ctx.newSessionId(),
+        phase: 'CASE_INTRO',
+        caseId: def.id,
+        players: makePlayers(def.minPlayers),
+        createdAt: ctx.now(),
+        updatedAt: ctx.now(),
+      };
+    }
+
+    case 'RESUME_SESSION': {
+      // Only ever clears the gate. Votes, cursors and progress are untouched.
+      if (!state.recoveryRequired) return state;
+      return touch({ ...state, recoveryRequired: false }, ctx);
+    }
+
+    case 'RESTART_SESSION': {
+      if (!state.recoveryRequired) return state;
+      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      // Without a case to go back to there is nothing to restart into.
+      if (!def) return createInitialState();
+      return {
+        ...createInitialState(),
+        sessionId: ctx.newSessionId(),
         phase: 'CASE_INTRO',
         caseId: def.id,
         players: makePlayers(def.minPlayers),
@@ -198,6 +248,23 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
 
     case 'READY_TO_DECIDE':
       return go(state, 'DECISION_READY', ctx);
+
+    case 'SET_ACCUSATION': {
+      // Naming somebody belongs to the investigation. Not to a briefing, where
+      // one player is alone with the phone and there is no "room" to speak;
+      // and not to the decision or the vote, where the arguing is over.
+      if (!isAccusationPhase(state.phase)) return state;
+      // Only somebody actually in play can be accused. This reuses the same
+      // notion of "a character in this game" the ballot is built from, so the
+      // engine stays case-agnostic and no second list of suspects exists.
+      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      if (!activeCharacterIds(state, def).includes(event.characterId)) return state;
+      // Re-accusing the same person changes nothing, and the store treats an
+      // unchanged reference as "nothing happened".
+      if (state.accusation === event.characterId) return state;
+      // Deliberately the only field written. An accusation is not a vote.
+      return touch({ ...state, accusation: event.characterId }, ctx);
+    }
 
     case 'START_VOTING':
       // A fresh decision: no carried-over ballot, and not a revote.

@@ -24,6 +24,8 @@ export function createDevGame(phase: GamePhase, playerCount = DEV_PLAYERS): Game
 
   const state: GameState = {
     ...base,
+    // Fixed rather than generated: a dev seed must look the same every time.
+    sessionId: 'dev-session',
     phase,
     caseId: CASE_001.id,
     players,

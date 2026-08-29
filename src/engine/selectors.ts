@@ -7,6 +7,7 @@ import type {
   EvidenceId,
   TruthFact,
 } from '../content/types';
+import { isAccusationPhase } from './accusation';
 import { factAt, interpretVote, isFinalStep, type TruthResult } from './truth';
 import {
   SEALED,
@@ -189,6 +190,45 @@ export function evidenceStateOf(
   if (!def) return 'UNDISCOVERED';
   if (nextEvidenceId(def.evidence, state.revealedEvidence) !== evidenceId) return 'UNDISCOVERED';
   return state.evidenceRevealed > SEALED && state.phase === 'EVIDENCE' ? 'INSPECTING' : 'AVAILABLE';
+}
+
+/* -------------------------------------------------------------- accusation */
+
+/**
+ * Who the room is naming, or nobody.
+ *
+ * Public on purpose, and the exact opposite of `ballotOptions`: a vote is
+ * sealed until every seat has spoken, whereas an accusation is the thing the
+ * table is saying out loud. Any screen may show it at any time.
+ *
+ * It carries a character and nothing else — no reason, no accuser, no
+ * history. There is deliberately nothing here that could expose what a player
+ * privately knows, because the only thing recorded is the name that was said.
+ */
+export function accusedCharacter(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): CharacterDefinition | undefined {
+  if (!def || !state.accusation) return undefined;
+  return charactersByIds(def, [state.accusation])[0];
+}
+
+/**
+ * Who the room may name right now, or nothing outside the investigation.
+ *
+ * Gated on the phase for the same reason `ballotOptions` is: a view cannot
+ * decide for itself that naming is allowed, it can only ask. Unlike the
+ * ballot there is no self-exclusion — the accusation belongs to the group, so
+ * every character in play is nameable, including the one whose player is
+ * arguing hardest that it is not them.
+ */
+export function accusableCharacters(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): CharacterDefinition[] {
+  if (!isAccusationPhase(state.phase) || !def) return [];
+  const ids = activeCharacterIds(state, def);
+  return def.characters.filter((c) => ids.includes(c.id));
 }
 
 /* -------------------------------------------------------------------- vote */

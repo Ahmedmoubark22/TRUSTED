@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { getCase } from '../content/registry';
 import { createGameStore } from '../engine/store';
+import { newSessionId } from '../engine/session';
 import type { EngineContext, GameState } from '../engine/types';
 import { createGamePersistence, type GamePersistence } from '../persistence/gameStorage';
 import { createMemoryStore } from '../persistence/storage';
@@ -26,6 +27,7 @@ export function GameProvider({ children, initialState, persistence }: GameProvid
     const context: EngineContext = {
       now: () => Date.now(),
       random: () => Math.random(),
+      newSessionId,
       getCase,
     };
 
