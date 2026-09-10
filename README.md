@@ -78,10 +78,15 @@ does anything.
 ### Testing a branch on a real device
 
 Railway builds a **PR Environment** per pull request, once that feature is
-switched on for the project. The environment is created from the pull-request
-webhook, so it covers pull requests opened *after* it was enabled — an older
-pull request that is already open gets nothing until its branch is pushed to
-again. If a preview URL never appears on a PR, that is usually why.
+switched on for the project — but only for pull requests **opened after** it
+was switched on. Observed on this repository: a pull request opened afterwards
+got an environment within seconds; one that was already open got none, and
+**pushing to its branch did not create one either**. A plain push is not enough,
+so if a preview URL never appears on an older pull request, that is why.
+
+The way back is to give Railway an open event it will act on — reopen the pull
+request — or to create the environment by hand and point its service at the
+branch.
 
 In that environment's service variables — and **only** there, never on
 production — set `VITE_ENABLE_DEV_BAR=true`, then redeploy. The redeploy is not
