@@ -31,6 +31,9 @@ const CULPRITS_BY_CASE: Record<CaseId, readonly CharacterId[]> = {
 
   // Case 005 — one culprit: hassan, who takes family money to cover debt.
   'case-005': ['hassan'],
+
+  // Case 006 — one culprit: rana, who stains the dress to delay the wedding.
+  'case-006': ['rana'],
 };
 
 /**
