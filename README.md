@@ -75,6 +75,17 @@ guessed the query string. Turning the tools on is now a deploy, by somebody
 with access to the build environment, rather than a URL. `?dev=1` no longer
 does anything.
 
+- **◀ / ▶** step through the approved phases one at a time
+- the **dropdown** jumps straight to any phase
+- **reset** clears the saved game and returns to HOME
+
+Jumping does not just set the phase — it loads a coherent seeded game
+(`src/app/dev/devSeed.ts`) with the players, roles, evidence and votes that
+phase would plausibly have arrived with. Most phases seed a four-player Case
+001; the two round phases seed a five-player Case 004 already one round in,
+because a round is only worth looking at once something has been struck off.
+So every screen is reviewable in one tap without playing through to it.
+
 ### Testing a branch on a real device
 
 Railway builds a **PR Environment** per pull request, once that feature is
@@ -95,15 +106,6 @@ environment that already deployed will not pick it up on its own.
 
 The preview URL then carries the dev bar. Production is unaffected either way:
 it was not built with the variable, and no query string can turn the tools on.
-
-- **◀ / ▶** step through the approved phases one at a time
-- the **dropdown** jumps straight to any phase
-- **reset** clears the saved game and returns to HOME
-
-Jumping does not just set the phase — it loads a coherent seeded 4-player game
-(`src/app/dev/devSeed.ts`) with the players, roles, evidence, and votes that
-phase would plausibly have arrived with. So every screen is reviewable in one
-tap without playing through to it.
 
 ---
 
