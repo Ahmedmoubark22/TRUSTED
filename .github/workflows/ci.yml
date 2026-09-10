@@ -1,0 +1,57 @@
+name: CI
+
+# Every pull request targeting main. main auto-deploys to production, so this
+# is the last gate before code reaches players — a red check here is a deploy
+# that should not happen.
+#
+# Not run on push to main: by the time a merge lands, Railway is already
+# building it, so a check there would report rather than prevent. If you want
+# that signal anyway, add `push: branches: [main]` below.
+on:
+  pull_request:
+    branches: [main]
+
+# A new push supersedes the run before it. Nothing is learned from finishing a
+# check against a commit that has already been replaced.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: build + test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Both versions, because package.json claims `engines.node: >=20` and an
+      # unverified claim is the one that breaks somebody. 20 is the floor a
+      # contributor may be on; 22 is what the container this was written in
+      # runs. Both were confirmed green before this workflow was added.
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # `ci`, not `install`: the lockfile is the input, and a run that quietly
+      # resolves a different tree is not testing what will be deployed.
+      - name: Install
+        run: npm ci
+
+      # `npm run build` is `tsc --noEmit && vite build`, so this is the
+      # typecheck as well. There is deliberately no separate typecheck step —
+      # it would run the same compiler twice and take twice as long to fail.
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
