@@ -17,6 +17,14 @@ import { createInitialState } from '../src/engine/initialState';
  *
  * So this one touches no events at all. It finds buttons, clicks them, and
  * reads the header the app shell prints — the same surface a player has.
+ *
+ * It is the only test that needs a DOM, which is why `jsdom` is a dependency
+ * at all — and why it is pinned to ^26 rather than latest. jsdom 30 declares
+ * `node: ^22.22.2 || ^24.15.0 || >=26.0.0`, dropping the Node 20 this package
+ * still claims to support in `engines`; npm treats that as advisory and
+ * installs it anyway, so the mismatch only shows up as
+ * `webidl.util.markAsUncloneable is not a function` when the suite actually
+ * runs on 20. jsdom 26 wants `>=18`, which leaves no gap under `>=20`.
  */
 
 const CASE_TITLE = 'آخر واحد شافه';
