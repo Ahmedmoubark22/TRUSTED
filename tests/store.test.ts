@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CASE_001 } from '../src/content/cases/case-001';
 import { getCase } from '../src/content/registry';
+import { getCulprits } from '../src/content/culprits';
 import { GAME_PHASES } from '../src/engine/phases';
 import { createGameStore } from '../src/engine/store';
 import type { EngineContext } from '../src/engine/types';
@@ -14,6 +15,7 @@ const ctx: EngineContext = {
   random: () => 0.42,
   newSessionId: () => `store-session-${(sessions += 1)}`,
   getCase,
+  getCulprits,
 };
 
 describe('game store', () => {

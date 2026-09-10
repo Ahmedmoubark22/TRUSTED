@@ -12,6 +12,39 @@ export type EvidenceId = string;
 export type TruthFactId = string;
 
 /**
+ * How a case is played.
+ *
+ * `reveal` is the original shape and stays the default: one investigation,
+ * one vote, a layered truth nobody was competing over. Cases 001–003 are
+ * authored for it and are not affected by anything the other mode adds.
+ *
+ * `interrogation` is competitive. Rounds of evidence, questioning, a private
+ * vote and an elimination; one or more culprits who know they are culprits
+ * and win by lasting. The mode lives on the case rather than in a setting
+ * because it is a property of the writing, not of the table.
+ */
+export const CASE_MODES = ['reveal', 'interrogation'] as const;
+
+export type CaseMode = (typeof CASE_MODES)[number];
+
+/**
+ * Who these people are to each other. Catalogue metadata — it groups the
+ * home screen and nothing else reads it.
+ */
+export const CAST_KINDS = ['family', 'neighbours', 'friends', 'colleagues', 'strangers'] as const;
+
+export type CastKind = (typeof CAST_KINDS)[number];
+
+/**
+ * Who the case is written for. A room of women, a room of men, or a mixed
+ * table — the writing differs, so the catalogue says so up front rather than
+ * letting a group find out at the briefing.
+ */
+export const CAST_GENDERS = ['women', 'men', 'mixed'] as const;
+
+export type CastGender = (typeof CAST_GENDERS)[number];
+
+/**
  * A role a player can be dealt.
  *
  * Public by design. A `CaseDefinition` is handed to every view, so anything
@@ -55,6 +88,20 @@ export interface PrivateBriefing {
    * were given here. No event, no state, nothing to persist.
    */
   confrontation?: BriefingConfrontation;
+  /**
+   * The one thing this character gives up to the whole room when they are
+   * cleared, in an `interrogation` case.
+   *
+   * This is what stops a wrong vote from being a wasted round: naming the
+   * wrong person still costs them a secret, so the case moves forward on
+   * every elimination rather than only on the right one. Written to be read
+   * out loud, and written to be worth hearing.
+   *
+   * It lives here, in the private record, because until it is spent it is
+   * exactly as private as the rest of the briefing. The engine names *who*
+   * has been cleared; it never carries what their card said.
+   */
+  onEliminated?: string;
 }
 
 /**
@@ -92,6 +139,9 @@ export const EVIDENCE_TYPES = [
   'receipt',
   'phoneScreen',
   'envelope',
+  // Case 004 — a printed institutional page. One more stylesheet rule under
+  // the same single viewer, exactly like the five above.
+  'form',
 ] as const;
 
 export type EvidenceType = (typeof EVIDENCE_TYPES)[number];
@@ -135,6 +185,19 @@ export interface EvidenceDefinition {
   requires: EvidenceId[];
   /** The question left hanging once this is on the table. */
   discussionPrompt?: string;
+  /**
+   * Who this object throws suspicion on, in an `interrogation` case.
+   *
+   * The rule the mode turns on: **at least two**. Evidence that names one
+   * person answers the case instead of feeding it, and a round with a settled
+   * answer has nothing left to interrogate. `tests/content.test.ts` enforces
+   * the floor rather than trusting the author to remember it.
+   *
+   * This is a *design* record, not a gameplay one. Nothing renders it and no
+   * screen reads it — it exists so the fairness audit can be run by a test
+   * instead of by hand.
+   */
+  implicates?: CharacterId[];
 }
 
 /**
@@ -203,6 +266,26 @@ export interface CaseDefinition {
   id: CaseId;
   title: string;
   subtitle: string;
+  /**
+   * How this case is played. Omitted means `reveal`, which is what keeps
+   * Cases 001–003 working untouched while the other mode exists.
+   */
+  mode?: CaseMode;
+  /**
+   * How many elimination rounds an `interrogation` case runs. Ignored by
+   * `reveal` cases.
+   *
+   * This is the difficulty dial, and it is authored rather than derived
+   * because it is the only number that moves the odds. A room voting at
+   * random catches every culprit with probability `C(rounds, culprits) /
+   * C(suspects, culprits)` — see `randomRoomWinOdds` in
+   * `src/engine/rounds.ts`, which a test holds inside a sane band so a case
+   * cannot ship unwinnable or unlosable.
+   */
+  rounds?: number;
+  /** Catalogue metadata. Groups the home screen; no gameplay meaning. */
+  castKind?: CastKind;
+  castGender?: CastGender;
   /** Text shown during CASE_INTRO. */
   intro: string[];
   minPlayers: number;

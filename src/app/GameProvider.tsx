@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { getCase } from '../content/registry';
+import { getCulprits } from '../content/culprits';
 import { createGameStore } from '../engine/store';
 import { newSessionId } from '../engine/session';
 import type { EngineContext, GameState } from '../engine/types';
@@ -29,6 +30,7 @@ export function GameProvider({ children, initialState, persistence }: GameProvid
       random: () => Math.random(),
       newSessionId,
       getCase,
+      getCulprits,
     };
 
     const store = createGameStore({

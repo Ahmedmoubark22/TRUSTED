@@ -1227,3 +1227,95 @@ h3 {
   font-family: inherit;
   font-size: inherit;
 }
+
+/* ------------------------------------------------------------------ rounds */
+
+/* A printed institutional page: squared off, close-set, and faintly grey. */
+.evidence--form .evidence__plate {
+  aspect-ratio: 1 / 1.3;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.01em;
+}
+
+.rounds__lead {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.rounds__implicated {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.rounds__implicated-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rounds__implicated-name {
+  font-weight: 600;
+}
+
+.rounds__rule {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.rounds__verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.rounds__badge {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.rounds__badge--culprit {
+  color: var(--color-text);
+}
+
+.rounds__card {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.rounds__card-label {
+  margin: 0 0 var(--space-2);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.rounds__card-text {
+  margin: 0;
+  line-height: 1.7;
+}
+
+/* --------------------------------------------------------------- catalogue */
+
+.catalogue__group + .catalogue__group {
+  margin-top: var(--space-6);
+}
+
+.catalogue__heading {
+  margin: 0 0 var(--space-3);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}

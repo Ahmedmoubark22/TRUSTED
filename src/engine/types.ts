@@ -1,6 +1,7 @@
 import type { CaseDefinition, CaseId, CharacterId, EvidenceId } from '../content/types';
 import type { BriefingStep } from './briefing';
 import type { GamePhase } from './phases';
+import type { RoundOutcome } from './rounds';
 import type { SessionId } from './session';
 import type { VoteStep } from './voting';
 
@@ -14,7 +15,7 @@ export interface Player {
 }
 
 /** Bumped whenever the persisted shape of GameState changes. */
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 /**
  * The one authoritative game state. Every view reads from this; no view keeps
@@ -109,6 +110,61 @@ export interface GameState {
   voteRevealStep: number;
   /** Index into the case's authored truth facts during TRUTH_REVEAL. */
   revealStep: number;
+
+  /* ------------------------------------------------- interrogation rounds */
+
+  /**
+   * The round being played, 1-based. `0` in a `reveal` case, which has none.
+   */
+  round: number;
+  /**
+   * How many rounds this case runs. Copied off the case when it is opened
+   * rather than read back through `getCase` on every derivation — it is fixed
+   * for the whole session, and holding it here keeps every round selector a
+   * pure function of state.
+   */
+  totalRounds: number;
+  /**
+   * Who did it — resolved **once**, when roles are dealt, and held here.
+   *
+   * It would be shorter to read this out of content on demand. Holding it in
+   * state instead is what makes the culprit a property of *this play-through*
+   * rather than of the case, so a later change to deal it at random is a
+   * content change and not an engine rewrite. That was the cheap decision to
+   * take now, and this is it.
+   *
+   * Empty in a `reveal` case, which is also how every round selector knows to
+   * stay out of the way.
+   */
+  culprits: CharacterId[];
+  /** Named, and innocent. Out of the suspect pool; cannot be named again. */
+  clearedCharacters: CharacterId[];
+  /** Named, and guilty. */
+  caughtCulprits: CharacterId[];
+  /**
+   * Who was struck off in the round now on screen, or `null`.
+   *
+   * The gate for the elimination card, and the reason it is a field rather
+   * than something inferred from the tail of the two lists above: this is
+   * *which card may be read right now*, and it is cleared the moment the
+   * round advances. Like every other private-content gate in the engine it
+   * holds an id, never the card.
+   */
+  lastEliminated: CharacterId | null;
+  /**
+   * How the case ended, or `null` while it is still running.
+   *
+   * Written by the reducer at the elimination, which is the one place the
+   * engine compares a name against the answer.
+   */
+  outcome: RoundOutcome | null;
+  /**
+   * Every completed round's ballot, oldest first.
+   *
+   * `votes` is cleared between rounds so the next one starts empty; without
+   * this the reveal of round three would have nothing to say about round one.
+   */
+  voteHistory: Record<PlayerId, CharacterId>[];
   createdAt: number | null;
   updatedAt: number | null;
 }
@@ -124,4 +180,12 @@ export interface EngineContext {
   /** A fresh session id. Injectable so session identity is fixed in tests. */
   newSessionId: () => SessionId;
   getCase: (caseId: CaseId) => CaseDefinition | undefined;
+  /**
+   * Who a case was authored guilty, or empty for a `reveal` case.
+   *
+   * Injected for the same reason `getCase` is — the engine stays content-
+   * agnostic — and reached through a narrow lookup rather than off the case
+   * definition, so the answer never travels on an object a view is handed.
+   */
+  getCulprits: (caseId: CaseId) => CharacterId[];
 }
