@@ -10,8 +10,10 @@ import { CASE_003 } from './cases/case-003';
 import { CASE_004 } from './cases/case-004';
 import { CASE_005 } from './cases/case-005';
 import { CASE_006 } from './cases/case-006';
+import { CASE_007 } from './cases/case-007';
+import { CASE_008 } from './cases/case-008';
 
-export const CASES: readonly CaseDefinition[] = [CASE_001, CASE_002, CASE_003, CASE_004, CASE_005, CASE_006];
+export const CASES: readonly CaseDefinition[] = [CASE_001, CASE_002, CASE_003, CASE_004, CASE_005, CASE_006, CASE_007, CASE_008];
 
 export const DEFAULT_CASE_ID: CaseId = CASE_001.id;
 
