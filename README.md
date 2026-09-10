@@ -77,11 +77,19 @@ does anything.
 
 ### Testing a branch on a real device
 
-Railway builds a **PR Environment** per pull request. Set
-`VITE_ENABLE_DEV_BAR=true` as a service variable **on that PR environment
-only** — never on the production environment — and redeploy. The preview URL
-then carries the dev bar; production is unaffected, because the value is baked
-in at build time and production was not built with it.
+Railway builds a **PR Environment** per pull request, once that feature is
+switched on for the project. The environment is created from the pull-request
+webhook, so it covers pull requests opened *after* it was enabled — an older
+pull request that is already open gets nothing until its branch is pushed to
+again. If a preview URL never appears on a PR, that is usually why.
+
+In that environment's service variables — and **only** there, never on
+production — set `VITE_ENABLE_DEV_BAR=true`, then redeploy. The redeploy is not
+optional: Vite reads the value while *building*, not while serving, so an
+environment that already deployed will not pick it up on its own.
+
+The preview URL then carries the dev bar. Production is unaffected either way:
+it was not built with the variable, and no query string can turn the tools on.
 
 - **◀ / ▶** step through the approved phases one at a time
 - the **dropdown** jumps straight to any phase
