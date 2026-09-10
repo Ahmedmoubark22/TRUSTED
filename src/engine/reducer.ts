@@ -445,6 +445,19 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
       return go(state, 'EVIDENCE', ctx, { ...fresh, evidenceRevealed: SEALED });
     }
 
+    case 'VOTE_REVEAL_COMPLETE': {
+      if (state.phase !== 'VOTE_REVEAL') return state;
+      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      // The mode decides, not the screen. Both destinations are ordinary
+      // events with their own guards, so this delegates rather than
+      // duplicating either of them.
+      return reduce(
+        state,
+        { type: def?.mode === 'interrogation' ? 'RESOLVE_ELIMINATION' : 'SHOW_TRUTH' },
+        ctx,
+      );
+    }
+
     case 'SHOW_TRUTH':
       return go(state, 'TRUTH_REVEAL', ctx, { revealStep: 0 });
 

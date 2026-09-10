@@ -124,6 +124,19 @@ export type GameEvent =
   // REVEAL
   /** Read out the next vote. The result appears once they have all been read. */
   | { type: 'ADVANCE_VOTE_REVEAL' }
+  /**
+   * "The votes have been read; move on" — the one button off the vote reveal,
+   * in either mode.
+   *
+   * The view sends this and nothing else. Where it leads is the reducer's
+   * call: a `reveal` case goes to its truth, an `interrogation` case strikes
+   * the named character off and plays on. That split lives in one place on
+   * purpose — the first version had the view choose the event, and it chose
+   * `SHOW_TRUTH` every time, so an interrogation case ended on its first
+   * ballot however the room voted and no test caught it, because the tests
+   * sent the event the button never sent.
+   */
+  | { type: 'VOTE_REVEAL_COMPLETE' }
   | { type: 'SHOW_TRUTH' }
   /**
    * Move to the next authored truth. Walking off the final one closes the
