@@ -15,9 +15,11 @@ export const GAME_PHASES = [
   'TABLE',
   'EVIDENCE',
   'DISCUSSION',
+  'INTERROGATION',
   'DECISION_READY',
   'VOTING',
   'VOTE_REVEAL',
+  'ELIMINATION',
   'TRUTH_REVEAL',
   'CASE_COMPLETE',
 ] as const;
@@ -45,9 +47,11 @@ export const PHASE_META: Record<GamePhase, PhaseMeta> = {
   TABLE: { title: 'The Table', hint: 'Investigate together.', isPrivate: false },
   EVIDENCE: { title: 'Evidence', hint: 'Everyone may look.', isPrivate: false },
   DISCUSSION: { title: 'Discussion', hint: 'Talk. Out loud. To each other.', isPrivate: false },
+  INTERROGATION: { title: 'Questions', hint: 'Answer, then ask.', isPrivate: false },
   DECISION_READY: { title: 'Ready?', hint: 'The vote cannot be undone.', isPrivate: false },
   VOTING: { title: 'Vote', hint: 'Pass the device. One player only.', isPrivate: true },
   VOTE_REVEAL: { title: 'The Vote', hint: 'What the room believed.', isPrivate: false },
+  ELIMINATION: { title: 'The Name', hint: 'What the room just found out.', isPrivate: false },
   TRUTH_REVEAL: { title: 'The Truth', hint: 'What actually happened.', isPrivate: false },
   CASE_COMPLETE: { title: 'Case Closed', hint: 'Everyone knew something.', isPrivate: false },
 };
@@ -60,22 +64,37 @@ export const PHASE_TRANSITIONS: Record<GamePhase, readonly GamePhase[]> = {
   CASE_INTRO: ['PLAYER_SETUP', 'HOME'],
   PLAYER_SETUP: ['CHARACTER_ASSIGNMENT', 'CASE_INTRO'],
   CHARACTER_ASSIGNMENT: ['PRIVATE_BRIEFINGS', 'PLAYER_SETUP'],
-  PRIVATE_BRIEFINGS: ['TABLE'],
+  // `reveal` cases open onto the table. `interrogation` cases have no table —
+  // they open onto the first object of round one, because the round *is* the
+  // structure and there is nothing to browse between rounds.
+  PRIVATE_BRIEFINGS: ['TABLE', 'EVIDENCE'],
   TABLE: ['EVIDENCE', 'DISCUSSION', 'DECISION_READY'],
   // Placing an object is what starts people talking, so EVIDENCE leads
-  // straight into DISCUSSION rather than back out to the table.
-  EVIDENCE: ['TABLE', 'DISCUSSION'],
+  // straight into DISCUSSION rather than back out to the table — or, in an
+  // `interrogation` case, into the questions that object just made possible.
+  EVIDENCE: ['TABLE', 'DISCUSSION', 'INTERROGATION'],
+  // Questioning only ends one way. There is no route back to the object and
+  // no route back to the table: the round moves forward to the ballot.
+  INTERROGATION: ['DECISION_READY'],
   // ...and "we're ready" either brings out the next object or, when there is
   // none left, ends the investigation. A discussion only moves forward; the
   // table is reached by backing out of an object, or from the decision.
   DISCUSSION: ['EVIDENCE', 'DECISION_READY'],
   DECISION_READY: ['VOTING', 'TABLE'],
   VOTING: ['VOTE_REVEAL'],
-  // The revote is the one loop in the machine. A tie sends the table back
+  // The revote is one loop in the machine. A tie sends the table back
   // through VOTING rather than adding a phase — the round is the same round,
   // just narrowed to the tied characters, and `revoteCandidates` being
   // non-empty is what stops it happening twice.
-  VOTE_REVEAL: ['TRUTH_REVEAL', 'VOTING'],
+  //
+  // ELIMINATION is the other exit, and only `interrogation` cases take it: a
+  // `reveal` case reads its vote and goes straight to the truth.
+  VOTE_REVEAL: ['TRUTH_REVEAL', 'VOTING', 'ELIMINATION'],
+  // The round loop, and the only backward edge in the machine. Which way it
+  // goes is not the view's call and not the table's: the reducer has already
+  // compared the name against the authored culprits by the time anyone sees
+  // this screen.
+  ELIMINATION: ['EVIDENCE', 'TRUTH_REVEAL'],
   TRUTH_REVEAL: ['CASE_COMPLETE'],
   CASE_COMPLETE: ['HOME'],
 };

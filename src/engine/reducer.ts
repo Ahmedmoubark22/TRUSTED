@@ -4,12 +4,14 @@ import type { GameEvent } from './events';
 import { nextBriefingStep } from './briefing';
 import { SEALED, isFullyUncovered, nextEvidenceId } from './evidence';
 import { canTransition, type GamePhase } from './phases';
+import { defaultRounds, isFinalRound, resolveElimination } from './rounds';
 import {
   activeCharacterIds,
   currentBriefingCharacterId,
   currentVoter,
   voteOutcome,
   votableCharacterIds,
+  votingPlayers,
 } from './selectors';
 import { MAX_PLAYERS, MIN_PLAYERS, createInitialState, makePlayer, makePlayers } from './initialState';
 import type { EngineContext, GameState } from './types';
@@ -66,6 +68,11 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
         phase: 'CASE_INTRO',
         caseId: def.id,
         players: makePlayers(def.minPlayers),
+        // Fixed for the session the moment the case is opened, so every round
+        // derivation downstream is a pure function of state. A `reveal` case
+        // has no rounds and keeps the zero.
+        totalRounds:
+          def.mode === 'interrogation' ? (def.rounds ?? defaultRounds(def.characters.length)) : 0,
         createdAt: ctx.now(),
         updatedAt: ctx.now(),
       };
@@ -88,6 +95,11 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
         phase: 'CASE_INTRO',
         caseId: def.id,
         players: makePlayers(def.minPlayers),
+        // Fixed for the session the moment the case is opened, so every round
+        // derivation downstream is a pure function of state. A `reveal` case
+        // has no rounds and keeps the zero.
+        totalRounds:
+          def.mode === 'interrogation' ? (def.rounds ?? defaultRounds(def.characters.length)) : 0,
         createdAt: ctx.now(),
         updatedAt: ctx.now(),
       };
@@ -163,7 +175,14 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
         if (characterId) assignments[player.id] = characterId;
       });
       if (Object.keys(assignments).length !== state.players.length) return state;
-      return touch({ ...state, assignments }, ctx);
+      // The culprits are resolved *here*, once, against the characters that
+      // were actually dealt — not read back out of content on every round.
+      // A culprit nobody is playing cannot be caught, so an undealt one is
+      // dropped rather than left to make the case unwinnable; `content.test`
+      // is what stops a case shipping in that shape.
+      const dealt = new Set(Object.values(assignments));
+      const culprits = ctx.getCulprits(def.id).filter((id) => dealt.has(id));
+      return touch({ ...state, assignments, culprits }, ctx);
     }
 
     case 'CONFIRM_ASSIGNMENTS': {
@@ -198,8 +217,22 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
       if (next < state.players.length) {
         return touch({ ...state, ...CLOSED_BRIEFING, briefingCursor: next }, ctx);
       }
+      // `reveal` cases open onto the table. `interrogation` cases have no
+      // table to open onto — round one starts on its first object.
+      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      if (def?.mode === 'interrogation') {
+        return go(state, 'EVIDENCE', ctx, {
+          ...CLOSED_BRIEFING,
+          briefingCursor: 0,
+          evidenceRevealed: SEALED,
+          round: 1,
+        });
+      }
       return go(state, 'TABLE', ctx, { ...CLOSED_BRIEFING, briefingCursor: 0 });
     }
+
+    case 'INTERROGATION_COMPLETE':
+      return go(state, 'DECISION_READY', ctx, {});
 
     case 'OPEN_EVIDENCE': {
       // Nothing left to bring out means nothing to open.
@@ -224,10 +257,16 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
       if (!item || item.id !== event.evidenceId) return state;
       // An object nobody has read cannot be put in front of everyone.
       if (!isFullyUncovered(item, state.evidenceRevealed)) return state;
-      return go(state, 'DISCUSSION', ctx, {
+      const placed = {
         revealedEvidence: [...state.revealedEvidence, item.id],
         evidenceRevealed: SEALED,
-      });
+      };
+      // The same tap, in both modes: putting an object in front of everyone is
+      // what starts people talking. What that talk *is* — an open discussion
+      // or a round of questions — is the case's shape, not the view's.
+      const placedIn = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      if (placedIn?.mode === 'interrogation') return go(state, 'INTERROGATION', ctx, placed);
+      return go(state, 'DISCUSSION', ctx, placed);
     }
 
     case 'DISCUSSION_COMPLETE': {
@@ -288,10 +327,14 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
       if (state.phase !== 'VOTING') return state;
       // A vote can only be locked from behind an opened gate.
       if (state.voteStep !== 'VOTING') return state;
-      const voter = state.players.find((p) => p.id === event.voterId);
+      // This round's voters — which in an `interrogation` case is not every
+      // seat. A player whose character has been cleared has no ballot to lock
+      // until the final round, and this is where that is enforced.
+      const voters = votingPlayers(state);
+      const voter = voters.find((p) => p.id === event.voterId);
       if (!voter) return state;
       // Only the player whose turn it is may vote, and only once.
-      if (state.players[state.voteCursor]?.id !== voter.id) return state;
+      if (voters[state.voteCursor]?.id !== voter.id) return state;
       if (voter.id in state.votes) return state;
       // The engine decides what is votable: not yourself, and in a revote only
       // the tied characters. An abstention has no target and fails here too.
@@ -301,7 +344,7 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
       }
       const votes = { ...state.votes, [voter.id]: event.targetCharacterId };
       const next = state.voteCursor + 1;
-      if (next < state.players.length) {
+      if (next < voters.length) {
         // The gate shuts before the device moves, so the next player arrives
         // at a sealed screen rather than at the last player's ballot.
         return touch({ ...state, ...CLOSED_VOTE, votes, voteCursor: next }, ctx);
@@ -316,7 +359,7 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
 
     case 'ADVANCE_VOTE_REVEAL': {
       if (state.phase !== 'VOTE_REVEAL') return state;
-      if (state.voteRevealStep >= state.players.length) return state;
+      if (state.voteRevealStep >= votingPlayers(state).length) return state;
       return touch({ ...state, voteRevealStep: state.voteRevealStep + 1 }, ctx);
     }
 
@@ -334,6 +377,85 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
         voteCursor: 0,
         voteRevealStep: 0,
       });
+    }
+
+    case 'RESOLVE_ELIMINATION': {
+      if (state.phase !== 'VOTE_REVEAL') return state;
+      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      if (def?.mode !== 'interrogation') return state;
+      const outcome = voteOutcome(state, def);
+      // A tie that has already had its revote is a round the room spent
+      // without agreeing. Nobody is struck off — but the round is gone, and
+      // if it was the last one, so is the case.
+      if (outcome.kind !== 'DECIDED' && outcome.kind !== 'DEADLOCK') return state;
+
+      const voteHistory = [...state.voteHistory, state.votes];
+
+      if (outcome.kind === 'DEADLOCK') {
+        return go(state, 'ELIMINATION', ctx, {
+          voteHistory,
+          lastEliminated: null,
+          outcome: isFinalRound(state.round, state.totalRounds) ? 'CULPRITS_WON' : 'RUNNING',
+        });
+      }
+
+      // The one comparison in the engine that needs the answer. `voting.ts`
+      // never sees it: it handed up a name, and the adjudication happens here.
+      const result = resolveElimination({
+        named: outcome.characterId,
+        culprits: state.culprits,
+        caught: state.caughtCulprits,
+        cleared: state.clearedCharacters,
+        active: activeCharacterIds(state, def),
+        round: state.round,
+        totalRounds: state.totalRounds,
+      });
+
+      return go(state, 'ELIMINATION', ctx, {
+        voteHistory,
+        lastEliminated: outcome.characterId,
+        caughtCulprits: result.caught,
+        clearedCharacters: result.cleared,
+        outcome: result.outcome,
+      });
+    }
+
+    case 'ADVANCE_ROUND': {
+      if (state.phase !== 'ELIMINATION') return state;
+      // Where this goes was settled at the elimination. The view only asks.
+      if (state.outcome !== 'RUNNING') {
+        return go(state, 'TRUTH_REVEAL', ctx, { revealStep: 0 });
+      }
+      const fresh = {
+        ...CLOSED_VOTE,
+        votes: {},
+        voteCursor: 0,
+        voteRevealStep: 0,
+        revoteCandidates: [],
+        round: state.round + 1,
+        // The card is spent. Clearing it here is what keeps the gate honest:
+        // an elimination card is readable on the screen that opened it and
+        // nowhere else, not even one round later.
+        lastEliminated: null,
+      };
+      // A round with no object left to bring out is still a round: the room
+      // argues over what it already has. Better than a phase with nothing on
+      // it, and it lets a case deliberately end on an evidence-free round.
+      if (!activeEvidence(state, ctx)) return go(state, 'DECISION_READY', ctx, fresh);
+      return go(state, 'EVIDENCE', ctx, { ...fresh, evidenceRevealed: SEALED });
+    }
+
+    case 'VOTE_REVEAL_COMPLETE': {
+      if (state.phase !== 'VOTE_REVEAL') return state;
+      const def = state.caseId ? ctx.getCase(state.caseId) : undefined;
+      // The mode decides, not the screen. Both destinations are ordinary
+      // events with their own guards, so this delegates rather than
+      // duplicating either of them.
+      return reduce(
+        state,
+        { type: def?.mode === 'interrogation' ? 'RESOLVE_ELIMINATION' : 'SHOW_TRUTH' },
+        ctx,
+      );
     }
 
     case 'SHOW_TRUTH':

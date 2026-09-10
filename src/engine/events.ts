@@ -71,6 +71,16 @@ export type GameEvent =
   | { type: 'READY_TO_DECIDE' }
   | { type: 'RETURN_TO_TABLE' }
 
+  // INTERROGATION (interrogation cases only)
+  /**
+   * Questioning is over. The only way out, and it goes to the ballot.
+   *
+   * There is no event for *entering* questioning: putting the object in front
+   * of everyone is what starts them, exactly as it starts a discussion in a
+   * `reveal` case. Same tap, same button — the mode decides where it lands.
+   */
+  | { type: 'INTERROGATION_COMPLETE' }
+
   // ACCUSATION
   /**
    * "We think it was —". What the room is currently arguing, which is not a
@@ -93,9 +103,40 @@ export type GameEvent =
   /** Run the single approved revote between the tied characters. */
   | { type: 'START_REVOTE' }
 
+  // ELIMINATION (interrogation cases only)
+  /**
+   * Strike the named character off, and find out what that cost.
+   *
+   * This is the one event in the machine whose result depends on the authored
+   * answer: the reducer compares the name against the case's culprits and
+   * writes the outcome. Carries nothing — the name is already in `votes`, and
+   * an event that carried its own target could strike off somebody the room
+   * never named.
+   */
+  | { type: 'RESOLVE_ELIMINATION' }
+  /**
+   * Leave the elimination screen — into the next round, or into the truth if
+   * the case has ended. Which of those it is was decided by the reducer at
+   * `RESOLVE_ELIMINATION`, not here and not by the view.
+   */
+  | { type: 'ADVANCE_ROUND' }
+
   // REVEAL
   /** Read out the next vote. The result appears once they have all been read. */
   | { type: 'ADVANCE_VOTE_REVEAL' }
+  /**
+   * "The votes have been read; move on" — the one button off the vote reveal,
+   * in either mode.
+   *
+   * The view sends this and nothing else. Where it leads is the reducer's
+   * call: a `reveal` case goes to its truth, an `interrogation` case strikes
+   * the named character off and plays on. That split lives in one place on
+   * purpose — the first version had the view choose the event, and it chose
+   * `SHOW_TRUTH` every time, so an interrogation case ended on its first
+   * ballot however the room voted and no test caught it, because the tests
+   * sent the event the button never sent.
+   */
+  | { type: 'VOTE_REVEAL_COMPLETE' }
   | { type: 'SHOW_TRUTH' }
   /**
    * Move to the next authored truth. Walking off the final one closes the

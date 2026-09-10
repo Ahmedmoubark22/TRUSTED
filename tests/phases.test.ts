@@ -17,9 +17,11 @@ describe('approved phase set', () => {
     'TABLE',
     'EVIDENCE',
     'DISCUSSION',
+    'INTERROGATION',
     'DECISION_READY',
     'VOTING',
     'VOTE_REVEAL',
+    'ELIMINATION',
     'TRUTH_REVEAL',
     'CASE_COMPLETE',
   ];

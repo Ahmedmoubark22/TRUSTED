@@ -40,6 +40,9 @@ export function VoteRevealView() {
   const accused = accusedCharacter(state, def);
   const isRevote = state.revoteCandidates.length > 0;
 
+  // What the last button says. Where it *goes* is the reducer's business —
+  // this screen sends one event in both modes and does not know the answer.
+  const inRounds = def?.mode === 'interrogation';
   const tied = outcome.kind === 'TIE' || outcome.kind === 'DEADLOCK';
   const tiedCharacters = charactersByIds(def, tied ? outcome.characterIds : []);
   const decided = outcome.kind === 'DECIDED' ? charactersByIds(def, [outcome.characterId])[0] : undefined;
@@ -91,8 +94,12 @@ export function VoteRevealView() {
             Vote again
           </Button>
         ) : (
-          <Button variant="primary" onClick={() => dispatch({ type: 'SHOW_TRUTH' })}>
-            Show the truth
+          <Button variant="primary" onClick={() => dispatch({ type: 'VOTE_REVEAL_COMPLETE' })}>
+            {!inRounds
+              ? 'Show the truth'
+              : outcome.kind === 'DEADLOCK'
+                ? 'Nobody is struck off'
+                : 'Strike the name off'}
           </Button>
         )
       }

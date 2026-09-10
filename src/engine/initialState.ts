@@ -54,6 +54,16 @@ export function createInitialState(): GameState {
     revoteCandidates: [],
     voteRevealStep: 0,
     revealStep: 0,
+    // A fresh state is not mid-case, so it is not mid-round either. A
+    // `reveal` case never moves any of these off their zero.
+    round: 0,
+    totalRounds: 0,
+    culprits: [],
+    clearedCharacters: [],
+    caughtCulprits: [],
+    lastEliminated: null,
+    outcome: null,
+    voteHistory: [],
     createdAt: null,
     updatedAt: null,
   };

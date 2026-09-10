@@ -8,6 +8,8 @@ import { PrivateBriefingsView } from '../features/briefing/PrivateBriefingsView'
 import { TableView } from '../features/table/TableView';
 import { EvidenceView } from '../features/evidence/EvidenceView';
 import { DiscussionView } from '../features/discussion/DiscussionView';
+import { InterrogationView } from '../features/rounds/InterrogationView';
+import { EliminationView } from '../features/rounds/EliminationView';
 import { DecisionReadyView } from '../features/voting/DecisionReadyView';
 import { VotingView } from '../features/voting/VotingView';
 import { VoteRevealView } from '../features/reveal/VoteRevealView';
@@ -29,9 +31,11 @@ const VIEWS: Record<GamePhase, ComponentType> = {
   TABLE: TableView,
   EVIDENCE: EvidenceView,
   DISCUSSION: DiscussionView,
+  INTERROGATION: InterrogationView,
   DECISION_READY: DecisionReadyView,
   VOTING: VotingView,
   VOTE_REVEAL: VoteRevealView,
+  ELIMINATION: EliminationView,
   TRUTH_REVEAL: TruthRevealView,
   CASE_COMPLETE: CaseCompleteView,
 };

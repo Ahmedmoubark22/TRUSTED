@@ -1,4 +1,5 @@
 import { Button, Screen } from '../../components';
+import { votingPlayers } from '../../engine/selectors';
 import { decisionQuestionFor } from '../../engine/voting';
 import { useCaseDefinition, useDispatch, useGameState } from '../../app/hooks';
 
@@ -14,6 +15,14 @@ export function DecisionReadyView() {
   const dispatch = useDispatch();
   const def = useCaseDefinition();
 
+  // An `interrogation` case has no TABLE phase to step back to, so offering
+  // the door would drop the room on a screen this mode never uses.
+  const hasTable = def?.mode !== 'interrogation';
+  // Not every seat votes in every round — a cleared character's player sits
+  // out until the last one. Promising five votes and collecting four is how a
+  // table decides the app has lost their ballot.
+  const voters = votingPlayers(state).length;
+
   return (
     <Screen
       kicker="Point of no return"
@@ -23,9 +32,11 @@ export function DecisionReadyView() {
           <Button variant="primary" onClick={() => dispatch({ type: 'START_VOTING' })}>
             Vote
           </Button>
-          <Button variant="ghost" onClick={() => dispatch({ type: 'RETURN_TO_TABLE' })}>
-            Not yet — back to the table
-          </Button>
+          {hasTable ? (
+            <Button variant="ghost" onClick={() => dispatch({ type: 'RETURN_TO_TABLE' })}>
+              Not yet — back to the table
+            </Button>
+          ) : null}
         </>
       }
     >
@@ -44,7 +55,7 @@ export function DecisionReadyView() {
         </p>
         <p className="decision__note">
           The device passes seat by seat. Each of you names one person, alone, and hands it on.
-          Nothing is shown until all {state.players.length} votes are in.
+          Nothing is shown until all {voters} votes are in.
         </p>
       </div>
     </Screen>

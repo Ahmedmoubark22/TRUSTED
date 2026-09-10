@@ -1,5 +1,6 @@
 import { isBriefingStep } from './briefing';
 import { isPhase } from './phases';
+import { isRoundOutcome } from './rounds';
 import { isVoteStep } from './voting';
 import type { GameState, Player } from './types';
 import { SCHEMA_VERSION } from './types';
@@ -55,6 +56,15 @@ export function isGameState(value: unknown): value is GameState {
     isStringArray(value.revoteCandidates) &&
     typeof value.voteRevealStep === 'number' &&
     typeof value.revealStep === 'number' &&
+    typeof value.round === 'number' &&
+    typeof value.totalRounds === 'number' &&
+    isStringArray(value.culprits) &&
+    isStringArray(value.clearedCharacters) &&
+    isStringArray(value.caughtCulprits) &&
+    (value.lastEliminated === null || typeof value.lastEliminated === 'string') &&
+    (value.outcome === null || isRoundOutcome(value.outcome)) &&
+    Array.isArray(value.voteHistory) &&
+    value.voteHistory.every(isStringRecord) &&
     (value.createdAt === null || typeof value.createdAt === 'number') &&
     (value.updatedAt === null || typeof value.updatedAt === 'number')
   );

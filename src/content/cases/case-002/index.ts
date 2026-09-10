@@ -34,6 +34,9 @@ export const CASE_002: CaseDefinition = {
 
   // Authored for exactly four players: four characters, four briefings. The
   // full جمعية is six; أم نادر and رمضان are absent tonight and are never dealt.
+  castKind: 'neighbours',
+  castGender: 'mixed',
+
   minPlayers: 4,
   maxPlayers: 4,
   estimatedMinutes: 50,
