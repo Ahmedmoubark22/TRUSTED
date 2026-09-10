@@ -7,6 +7,8 @@ import { CASE_003 } from './cases/case-003';
 import { CASE_003_BRIEFINGS } from './cases/case-003/briefings';
 import { CASE_004 } from './cases/case-004';
 import { CASE_004_BRIEFINGS } from './cases/case-004/briefings';
+import { CASE_005 } from './cases/case-005';
+import { CASE_005_BRIEFINGS } from './cases/case-005/briefings';
 
 /**
  * The only way to reach a character's private knowledge.
@@ -25,6 +27,7 @@ const BRIEFINGS_BY_CASE: Record<CaseId, Record<CharacterId, PrivateBriefing>> = 
   [CASE_002.id]: CASE_002_BRIEFINGS,
   [CASE_003.id]: CASE_003_BRIEFINGS,
   [CASE_004.id]: CASE_004_BRIEFINGS,
+  [CASE_005.id]: CASE_005_BRIEFINGS,
 };
 
 export function getPrivateBriefing(

@@ -8,8 +8,9 @@ import { CASE_001 } from './cases/case-001';
 import { CASE_002 } from './cases/case-002';
 import { CASE_003 } from './cases/case-003';
 import { CASE_004 } from './cases/case-004';
+import { CASE_005 } from './cases/case-005';
 
-export const CASES: readonly CaseDefinition[] = [CASE_001, CASE_002, CASE_003, CASE_004];
+export const CASES: readonly CaseDefinition[] = [CASE_001, CASE_002, CASE_003, CASE_004, CASE_005];
 
 export const DEFAULT_CASE_ID: CaseId = CASE_001.id;
 
