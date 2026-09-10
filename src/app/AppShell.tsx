@@ -27,12 +27,22 @@ export function AppShell({ children, footer }: AppShellProps) {
   const state = useGameState();
   const meta = state.recoveryRequired ? RECOVERY_META : PHASE_META[state.phase];
 
+  // The bar locates the room inside a case: which phase they are in, and one
+  // line about it. HOME is the one screen where there is no case to be
+  // located inside — and where the view's own hero already says the same two
+  // things the bar would, so it rendered the product name directly above the
+  // product name. An interrupted session still gets the bar wherever it was
+  // left, because there the point is that something *is* in progress.
+  const isHome = state.phase === 'HOME' && !state.recoveryRequired;
+
   return (
     <div className="app">
-      <header className="app__bar">
-        <p className="app__eyebrow">{meta.hint}</p>
-        <p className="app__title">{meta.title}</p>
-      </header>
+      {isHome ? null : (
+        <header className="app__bar">
+          <p className="app__eyebrow">{meta.hint}</p>
+          <p className="app__title">{meta.title}</p>
+        </header>
+      )}
       <main className="app__main">{children}</main>
       {footer}
     </div>
