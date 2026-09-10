@@ -1,6 +1,7 @@
 import { CASE_001 } from '../src/content/cases/case-001';
 import type { CharacterId, EvidenceDefinition } from '../src/content/types';
 import { getCase } from '../src/content/registry';
+import { getCulprits } from '../src/content/culprits';
 import { nextEvidenceId } from '../src/engine/evidence';
 import { votableCharacterIds } from '../src/engine/selectors';
 import type { GameEvent } from '../src/engine/events';
@@ -24,6 +25,7 @@ export const ctx: EngineContext = {
   random: () => 0.42,
   newSessionId: () => `session-${(sessionCounter += 1)}`,
   getCase,
+  getCulprits,
 };
 
 export function run(state: GameState, ...events: GameEvent[]): GameState {

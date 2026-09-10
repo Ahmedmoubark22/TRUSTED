@@ -26,9 +26,16 @@ export function EvidenceView() {
   const fragments = visibleFragments(state, evidence);
   const complete = isEvidenceFullyInspected(state, evidence);
 
+  // In an `interrogation` case this screen opens the round, and the round is
+  // the whole structure — how many are left is what the room is pacing itself
+  // against. The questions and elimination screens both say it; this one
+  // saying "On the table" instead was the only place the count went missing.
+  const kicker =
+    def?.mode === 'interrogation' ? `Round ${state.round} of ${state.totalRounds}` : 'On the table';
+
   return (
     <Screen
-      kicker="On the table"
+      kicker={kicker}
       title={fragments.length === 0 ? 'Something has surfaced' : evidence.title}
       lede={
         fragments.length === 0

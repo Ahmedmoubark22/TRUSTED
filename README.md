@@ -6,9 +6,13 @@ A premium mobile-first social mystery game for 3–6 players sharing one physica
 device. Pass-and-play private information, real-world discussion, evidence-driven
 investigation, private sequential voting, and a layered truth reveal.
 
-**Status:** application foundation only. Case 001 — *The Last Guest* exists as
-structurally valid placeholder content so the flow can be exercised end to end.
-No final writing, artwork, or audio yet.
+**Status:** four cases. 002 — *«الدور»* and 003 — *«الفويس»* are authored
+Egyptian Arabic content, played in the original **reveal** mode: one
+investigation, one vote, a layered truth. 004 — *«آخر واحد شافه»* is the trial
+for the competitive **interrogation** mode — rounds of evidence, questions, a
+vote and an elimination, against a culprit who knows they are one — with final
+structure and provisional prose. 001 remains placeholder content. No artwork or
+audio yet.
 
 ---
 
@@ -75,10 +79,33 @@ does anything.
 - the **dropdown** jumps straight to any phase
 - **reset** clears the saved game and returns to HOME
 
-Jumping does not just set the phase — it loads a coherent seeded 4-player game
-(`src/app/dev/devSeed.ts`) with the players, roles, evidence, and votes that
-phase would plausibly have arrived with. So every screen is reviewable in one
-tap without playing through to it.
+Jumping does not just set the phase — it loads a coherent seeded game
+(`src/app/dev/devSeed.ts`) with the players, roles, evidence and votes that
+phase would plausibly have arrived with. Most phases seed a four-player Case
+001; the two round phases seed a five-player Case 004 already one round in,
+because a round is only worth looking at once something has been struck off.
+So every screen is reviewable in one tap without playing through to it.
+
+### Testing a branch on a real device
+
+Railway builds a **PR Environment** per pull request, once that feature is
+switched on for the project — but only for pull requests **opened after** it
+was switched on. Observed on this repository: a pull request opened afterwards
+got an environment within seconds; one that was already open got none, and
+**pushing to its branch did not create one either**. A plain push is not enough,
+so if a preview URL never appears on an older pull request, that is why.
+
+The way back is to give Railway an open event it will act on — reopen the pull
+request — or to create the environment by hand and point its service at the
+branch.
+
+In that environment's service variables — and **only** there, never on
+production — set `VITE_ENABLE_DEV_BAR=true`, then redeploy. The redeploy is not
+optional: Vite reads the value while *building*, not while serving, so an
+environment that already deployed will not pick it up on its own.
+
+The preview URL then carries the dev bar. Production is unaffected either way:
+it was not built with the variable, and no query string can turn the tools on.
 
 ---
 
@@ -99,7 +126,12 @@ src/
   content/      authored case definitions
     cases/
       case-001/ The Last Guest (placeholder content)
+      case-002/ «الدور» — reveal mode
+      case-003/ «الفويس» — reveal mode
+      case-004/ «آخر واحد شافه» — interrogation mode (trial)
+    culprits.ts who did it, kept off the public case definition
   features/     one folder per area of play
+    rounds/     interrogation and elimination, for cases played in rounds
     setup/      player setup, character assignment
     briefing/   private pass-and-play briefings
     table/      the shared investigation hub
@@ -122,6 +154,13 @@ public/assets/  static case assets (empty)
 `HOME → CASE_INTRO → PLAYER_SETUP → CHARACTER_ASSIGNMENT → PRIVATE_BRIEFINGS →
 TABLE ⇄ EVIDENCE / DISCUSSION → DECISION_READY → VOTING → VOTE_REVEAL →
 TRUTH_REVEAL → CASE_COMPLETE`
+
+A case in **interrogation** mode runs a loop instead of a single pass:
+`EVIDENCE → INTERROGATION → DECISION_READY → VOTING → VOTE_REVEAL →
+ELIMINATION`, and `ELIMINATION` returns to `EVIDENCE` or goes on to
+`TRUTH_REVEAL`. Which way it goes is decided by the reducer, from the authored
+culprits, before the screen renders. See
+[`docs/case-design/FORMAT_INTERROGATION_ROUNDS.md`](docs/case-design/FORMAT_INTERROGATION_ROUNDS.md).
 
 The legal moves between phases live in one table — `PHASE_TRANSITIONS` in
 [`src/engine/phases.ts`](src/engine/phases.ts). The reducer rejects anything
@@ -177,7 +216,12 @@ finished visual language — but every screen already reads from one place.
 
 ## Not built yet
 
-Deliberately out of scope at this stage: final Case 001 content, character
-writing, evidence, artwork, audio, and reveal text; online or same-Wi-Fi
-multiplayer; any backend, accounts, or payments; analytics; AI gameplay; and
-Cases 002 and 003.
+Deliberately out of scope at this stage: final Case 001 and Case 004 prose,
+artwork and audio; online or same-Wi-Fi multiplayer; any backend, accounts, or
+payments; analytics; and AI gameplay.
+
+One gap is known and recorded in `src/content/cases/case-004/truth.ts`: an
+interrogation case's *truth text* still ships on the public case definition and
+names the culprit. The engine no longer reads it — adjudication goes through
+`getCulprits`, which is private — so nothing leaks during play, but a player
+with devtools could read it out of the bundle ahead of the reveal.

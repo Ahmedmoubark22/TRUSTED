@@ -1198,6 +1198,8 @@ h3 {
   background: var(--color-surface-sunken);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
+  /* These are tapped, not clicked — no double-tap-to-zoom delay on them. */
+  touch-action: manipulation;
 }
 
 .devbar__label {
@@ -1206,7 +1208,11 @@ h3 {
 }
 
 .devbar__btn {
-  min-height: 32px;
+  /* 44px is the smallest thing a thumb hits reliably. The dev bar is the one
+     control in the app operated while holding the phone one-handed and
+     looking at something else, so it gets the full target. */
+  min-height: 44px;
+  min-width: 44px;
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
@@ -1219,11 +1225,107 @@ h3 {
 .devbar__select {
   flex: 1;
   min-width: 8rem;
-  min-height: 32px;
+  min-height: 44px;
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
   font-family: inherit;
-  font-size: inherit;
+  /* Not `inherit`, and not a token. iOS Safari zooms the whole page in when a
+     form control it focuses computes below 16px, and it never zooms back out
+     — which would leave a phone tester pinching their way through every jump.
+     16px exactly is the threshold. */
+  font-size: 16px;
+}
+
+/* ------------------------------------------------------------------ rounds */
+
+/* A printed institutional page: squared off, close-set, and faintly grey. */
+.evidence--form .evidence__plate {
+  aspect-ratio: 1 / 1.3;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.01em;
+}
+
+.rounds__lead {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.rounds__implicated {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.rounds__implicated-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rounds__implicated-name {
+  font-weight: 600;
+}
+
+.rounds__rule {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.rounds__verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.rounds__badge {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.rounds__badge--culprit {
+  color: var(--color-text);
+}
+
+.rounds__card {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.rounds__card-label {
+  margin: 0 0 var(--space-2);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.rounds__card-text {
+  margin: 0;
+  line-height: 1.7;
+}
+
+/* --------------------------------------------------------------- catalogue */
+
+.catalogue__group + .catalogue__group {
+  margin-top: var(--space-6);
+}
+
+.catalogue__heading {
+  margin: 0 0 var(--space-3);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }

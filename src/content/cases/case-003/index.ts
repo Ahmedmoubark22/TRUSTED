@@ -43,6 +43,9 @@ export const CASE_003: CaseDefinition = {
     'كل واحد فيكم عنده سبب يخاف من سؤال مختلف، وكل واحد عنده معلومة يقدر يستعملها ضد حد تاني. بس واحد بس فيكم هو اللي سرّب.',
   ],
 
+  castKind: 'family',
+  castGender: 'mixed',
+
   // Authored for exactly four players: four characters, four briefings.
   minPlayers: 4,
   maxPlayers: 4,

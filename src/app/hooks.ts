@@ -3,7 +3,7 @@ import type { CaseDefinition, PrivateBriefing } from '../content/types';
 import { getCase } from '../content/registry';
 import { getPrivateBriefing } from '../content/briefings';
 import type { GameEvent } from '../engine/events';
-import { revealableCharacterId } from '../engine/selectors';
+import { revealableCharacterId, revealableEliminationCardId } from '../engine/selectors';
 import type { GameState } from '../engine/types';
 import { GameContext, type GameContextValue } from './gameContext';
 
@@ -45,6 +45,24 @@ export function useCurrentBriefing(): PrivateBriefing | undefined {
   const state = useGameState();
   const characterId = revealableCharacterId(state);
   return getPrivateBriefing(state.caseId, characterId);
+}
+
+/**
+ * The elimination card of whoever the room just struck off, if one may be read.
+ *
+ * The briefing hook's twin, and deliberately the same shape: the engine says
+ * *whose* card is open, content says what it says, and neither half can leak
+ * without the other. The difference is only in the audience — a briefing is
+ * for one pair of hands, and this is read out to everybody, which is the
+ * whole point of paying for a wrong vote with a secret.
+ *
+ * Returns `undefined` for a character whose briefing did not author a card,
+ * which is what a `reveal` case's briefings all look like.
+ */
+export function useEliminationCard(): string | undefined {
+  const state = useGameState();
+  const characterId = revealableEliminationCardId(state);
+  return getPrivateBriefing(state.caseId, characterId)?.onEliminated;
 }
 
 export function usePersistence() {

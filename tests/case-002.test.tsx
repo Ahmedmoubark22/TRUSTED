@@ -9,6 +9,7 @@ import { CASE_002_EVIDENCE } from '../src/content/cases/case-002/evidence';
 import { CASE_002_TRUTH } from '../src/content/cases/case-002/truth';
 import { briefedCharacterIds, getPrivateBriefing } from '../src/content/briefings';
 import { getCase } from '../src/content/registry';
+import { getCulprits } from '../src/content/culprits';
 import { EVIDENCE_TYPES, TRUTH_IMPORTANCE } from '../src/content/types';
 import type { CharacterId, EvidenceDefinition } from '../src/content/types';
 import { nextEvidenceId } from '../src/engine/evidence';
@@ -36,6 +37,7 @@ const ctx: EngineContext = {
   random: () => 0.42,
   newSessionId: () => `case002-session-${(sessions += 1)}`,
   getCase,
+  getCulprits,
 };
 
 const ANSWER: CharacterId = 'mostafa';

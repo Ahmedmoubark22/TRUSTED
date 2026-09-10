@@ -8,6 +8,7 @@ import type {
   TruthFact,
 } from '../content/types';
 import { isAccusationPhase } from './accusation';
+import { isFinalRound, remainingSuspects } from './rounds';
 import { factAt, interpretVote, isFinalStep, type TruthResult } from './truth';
 import {
   SEALED,
@@ -34,8 +35,33 @@ export function currentBriefingPlayer(state: GameState): Player | undefined {
   return state.players[state.briefingCursor];
 }
 
+/**
+ * Who votes this round.
+ *
+ * In a `reveal` case, everybody, always — nothing is ever cleared, so the
+ * first line is the whole answer and the round rules never come near it.
+ *
+ * In an `interrogation` case a player whose character has been cleared sits
+ * the middle rounds out: the room has answered for them, and what is left to
+ * decide is about people it has not. **The final round gives every seat its
+ * vote back**, because that is the one that ends the case and nobody should
+ * watch it happen.
+ *
+ * Pure in `state` on purpose. `totalRounds` is copied onto state when the case
+ * is opened precisely so this — and everything downstream of it — never needs
+ * the case definition to work out who is holding a ballot.
+ */
+export function votingPlayers(state: GameState): Player[] {
+  if (state.clearedCharacters.length === 0) return state.players;
+  if (isFinalRound(state.round, state.totalRounds)) return state.players;
+  return state.players.filter((player) => {
+    const characterId = state.assignments[player.id];
+    return characterId === undefined || !state.clearedCharacters.includes(characterId);
+  });
+}
+
 export function currentVoter(state: GameState): Player | undefined {
-  return state.players[state.voteCursor];
+  return votingPlayers(state)[state.voteCursor];
 }
 
 /**
@@ -192,6 +218,46 @@ export function evidenceStateOf(
   return state.evidenceRevealed > SEALED && state.phase === 'EVIDENCE' ? 'INSPECTING' : 'AVAILABLE';
 }
 
+/* ------------------------------------------------------------------ rounds */
+
+/**
+ * Who the object now in front of the room throws suspicion on.
+ *
+ * Public by construction — `implicates` is authored design metadata about a
+ * shared object, not anybody's private knowledge, and naming those people out
+ * loud *is* the interrogation round. Empty outside INTERROGATION, and empty
+ * for an object that did not author the field.
+ */
+export function implicatedCharacters(
+  state: GameState,
+  def: CaseDefinition | undefined,
+): CharacterDefinition[] {
+  if (state.phase !== 'INTERROGATION' || !def) return [];
+  const ids = lastPlacedEvidence(state, def)?.implicates ?? [];
+  const inPlay = new Set(activeCharacterIds(state, def));
+  return def.characters.filter((c) => ids.includes(c.id) && inPlay.has(c.id));
+}
+
+/**
+ * The one character whose elimination card may be read right now, or nothing.
+ *
+ * The third gate in the engine, built exactly like `revealableCharacterId` and
+ * `inspectableEvidence` and for the same reason: a view cannot decide to open
+ * somebody's card, it can only ask which one it is allowed to open — and it
+ * gets back an id, never the text. Outside ELIMINATION the answer is always
+ * nothing, and a round that ended in deadlock struck nobody off, so there is
+ * no card to read.
+ */
+export function revealableEliminationCardId(state: GameState): CharacterId | undefined {
+  if (state.phase !== 'ELIMINATION') return undefined;
+  return state.lastEliminated ?? undefined;
+}
+
+/** Whether the name the room just struck off was one of the culprits. */
+export function lastEliminationWasCulprit(state: GameState): boolean {
+  return state.lastEliminated !== null && state.caughtCulprits.includes(state.lastEliminated);
+}
+
 /* -------------------------------------------------------------- accusation */
 
 /**
@@ -240,7 +306,11 @@ export function activeCharacterIds(
 ): CharacterId[] {
   if (!def) return [];
   const dealt = new Set(Object.values(state.assignments));
-  return def.characters.filter((c) => dealt.has(c.id)).map((c) => c.id);
+  const inPlay = def.characters.filter((c) => dealt.has(c.id)).map((c) => c.id);
+  // Struck off is struck off. Filtering here rather than at each call site is
+  // what stops a cleared character reappearing on a ballot, in a tally, or as
+  // something the room can accuse — those all read this one list.
+  return remainingSuspects(inPlay, state.clearedCharacters, state.caughtCulprits);
 }
 
 /**
@@ -285,7 +355,7 @@ export function ballotOptions(
  * a ballot in progress cannot be read out of this.
  */
 export function ballot(state: GameState): Vote[] {
-  return state.players.map((player) => {
+  return votingPlayers(state).map((player) => {
     const target = state.votes[player.id];
     return {
       playerId: player.id,
@@ -296,7 +366,8 @@ export function ballot(state: GameState): Vote[] {
 }
 
 export function allVotesCast(state: GameState): boolean {
-  return state.players.length > 0 && Object.keys(state.votes).length === state.players.length;
+  const voters = votingPlayers(state);
+  return voters.length > 0 && Object.keys(state.votes).length === voters.length;
 }
 
 /** Counts per candidate, highest first. Derived — never authored anywhere. */
@@ -336,7 +407,7 @@ export function voteRevealLines(
 ): VoteRevealLine[] {
   if (state.phase !== 'VOTE_REVEAL' || !def) return [];
   const find = (id: CharacterId | undefined) => def.characters.find((c) => c.id === id);
-  return state.players.slice(0, state.voteRevealStep).map((player) => ({
+  return votingPlayers(state).slice(0, state.voteRevealStep).map((player) => ({
     voter: find(state.assignments[player.id]),
     target: find(state.votes[player.id]),
   }));
@@ -344,7 +415,7 @@ export function voteRevealLines(
 
 /** True once every vote has been read out and the result may be shown. */
 export function voteRevealComplete(state: GameState): boolean {
-  return state.phase === 'VOTE_REVEAL' && state.voteRevealStep >= state.players.length;
+  return state.phase === 'VOTE_REVEAL' && state.voteRevealStep >= votingPlayers(state).length;
 }
 
 export function charactersByIds(
