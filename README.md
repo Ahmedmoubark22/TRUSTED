@@ -58,8 +58,18 @@ npm run preview
 
 ## Development / test mode
 
-A dev bar is pinned to the bottom of the screen during `npm run dev`, and on a
-production build when the URL carries `?dev=1`.
+A dev bar is pinned to the bottom of the screen. It is present in exactly two
+places, and **never on production**:
+
+- during `npm run dev`, and
+- on a deployed build made with `VITE_ENABLE_DEV_BAR=true`.
+
+The gate is build-time on purpose. It used to also accept `?dev=1` on any
+production build — which meant the phase jumper, a control that rewrites game
+state to whatever you pick, was reachable on the live site by anyone who
+guessed the query string. Turning the tools on is now a deploy, by somebody
+with access to the build environment, rather than a URL. `?dev=1` no longer
+does anything.
 
 - **◀ / ▶** step through the approved phases one at a time
 - the **dropdown** jumps straight to any phase
