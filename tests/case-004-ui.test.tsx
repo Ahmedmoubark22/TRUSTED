@@ -17,6 +17,14 @@ import { createInitialState } from '../src/engine/initialState';
  *
  * So this one touches no events at all. It finds buttons, clicks them, and
  * reads the header the app shell prints — the same surface a player has.
+ *
+ * It is the only test that needs a DOM, which is why `jsdom` is a dependency
+ * at all — and why it is pinned to ^26 rather than latest. jsdom 30 declares
+ * `node: ^22.22.2 || ^24.15.0 || >=26.0.0`, dropping the Node 20 this package
+ * still claims to support in `engines`; npm treats that as advisory and
+ * installs it anyway, so the mismatch only shows up as
+ * `webidl.util.markAsUncloneable is not a function` when the suite actually
+ * runs on 20. jsdom 26 wants `>=18`, which leaves no gap under `>=20`.
  */
 
 const CASE_TITLE = 'آخر واحد شافه';
@@ -66,9 +74,18 @@ function all(selector: string): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>(selector)];
 }
 
-/** What the shell header says — the test's only way of knowing where it is. */
+/**
+ * The title on screen — the test's only way of knowing where it is.
+ *
+ * Normally that is the shell bar, which names the phase. HOME is the one
+ * screen with no bar: there is no case to locate the room inside, and the
+ * view's own hero carries the name instead. A player reads a title either
+ * way, so this looks in both places rather than assuming the chrome.
+ */
 function header(): string {
-  return document.querySelector('.app__title')?.textContent?.trim() ?? '';
+  const bar = document.querySelector('.app__title')?.textContent?.trim();
+  if (bar) return bar;
+  return document.querySelector('.screen__title')?.textContent?.trim() ?? '';
 }
 
 function screenText(): string {

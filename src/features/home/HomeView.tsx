@@ -1,6 +1,6 @@
 import { Button, Card, Screen } from '../../components';
 import { CASES } from '../../content/registry';
-import { caseMetaLine, casesByPlayerCount } from '../../content/catalogue';
+import { caseMetaLine, casesByPlayerCount, playerCountLabel } from '../../content/catalogue';
 import { useDispatch } from '../../app/hooks';
 
 /**
@@ -11,6 +11,11 @@ import { useDispatch } from '../../app/hooks';
  * tonight — what can we play? Everything else about a case (who these people
  * are to each other, whether the room is women or men or mixed, how long, and
  * whether it is played in rounds) rides on one line under the title.
+ *
+ * The headings and that line are English, like every other piece of chrome in
+ * the app. Arabic here is the *content* — a case's title and its subtitle —
+ * and keeping the two apart is what lets an Arabic case sit in an English
+ * shell without either looking like a mistake.
  */
 export function HomeView() {
   const dispatch = useDispatch();
@@ -23,7 +28,7 @@ export function HomeView() {
     >
       {casesByPlayerCount(CASES).map((group) => (
         <section key={group.count} className="catalogue__group">
-          <h2 className="catalogue__heading">{group.count} لاعيبة</h2>
+          <h2 className="catalogue__heading">{playerCountLabel(group.count)}</h2>
           {group.cases.map((c) => (
             <Card key={c.id} title={c.title} meta={caseMetaLine(c)}>
               <p className="screen__lede" dir="auto">

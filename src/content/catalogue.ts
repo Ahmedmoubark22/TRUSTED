@@ -9,27 +9,41 @@ import type { CaseDefinition, CastGender, CastKind } from './types';
  * are authored metadata rather than something inferred from a cast list, and
  * they are turned into words here, once, instead of in whichever screen
  * happens to be showing them.
+ *
+ * The words are English, because this is **chrome**. Everything the app says
+ * in its own voice — buttons, phase headers, the rules of a round — is
+ * English; Arabic is reserved for what a case *is*: its title, its subtitle,
+ * its briefings, the text on its objects. A card that read
+ * `4 لاعيبة · جيران · مختلط` put the shell's voice into the content's
+ * language, which is how "4–4 players" got read as a bug in the first place
+ * rather than as a line nobody could parse.
  */
 
 const KIND_LABELS: Record<CastKind, string> = {
-  family: 'عيلة',
-  neighbours: 'جيران',
-  friends: 'أصحاب',
-  colleagues: 'زمايل شغل',
-  strangers: 'ناس ما تعرفش بعض',
+  family: 'family',
+  neighbours: 'neighbours',
+  friends: 'friends',
+  colleagues: 'colleagues',
+  strangers: 'strangers',
 };
 
 const GENDER_LABELS: Record<CastGender, string> = {
-  women: 'بنات',
-  men: 'شباب',
-  mixed: 'مختلط',
+  women: 'women',
+  men: 'men',
+  mixed: 'mixed',
 };
 
-/** The size a case is authored for, as a label — "5" or "4–6". */
-export function playerCountLabel(def: CaseDefinition): string {
-  return def.minPlayers === def.maxPlayers
-    ? `${def.minPlayers}`
-    : `${def.minPlayers}–${def.maxPlayers}`;
+/**
+ * A seat count as words — "4 players", or "4–6 players" for a case that
+ * genuinely takes a range.
+ *
+ * The range is the exception in this collection, not the format: briefings are
+ * authored per character, so most cases are written for one exact number of
+ * seats. Printing `min–max` unconditionally turned that into "4–4 players".
+ */
+export function playerCountLabel(min: number, max: number = min): string {
+  const seats = min === max ? `${min}` : `${min}–${max}`;
+  return `${seats} player${max === 1 ? '' : 's'}`;
 }
 
 /**
@@ -39,11 +53,14 @@ export function playerCountLabel(def: CaseDefinition): string {
  * answer before anything else — there are five of us, what can we play?
  */
 export function caseMetaLine(def: CaseDefinition): string {
-  const parts = [`${playerCountLabel(def)} لاعيبة`];
+  const parts = [playerCountLabel(def.minPlayers, def.maxPlayers)];
   if (def.castKind) parts.push(KIND_LABELS[def.castKind]);
   if (def.castGender) parts.push(GENDER_LABELS[def.castGender]);
-  parts.push(`~${def.estimatedMinutes} د`);
-  if (def.mode === 'interrogation') parts.push('استجواب');
+  parts.push(`~${def.estimatedMinutes} min`);
+  // Named rather than left implicit: a case played in rounds against somebody
+  // who knows they are the answer is a different evening from one played
+  // together, and a group should know which they are picking.
+  if (def.mode === 'interrogation') parts.push('rounds');
   return parts.join(' · ');
 }
 
