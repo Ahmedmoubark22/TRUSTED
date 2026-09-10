@@ -38,7 +38,10 @@ export function InterrogationView() {
       {implicated.length > 0 ? (
         <>
           <p className="rounds__lead">
-            {object ? `${object.title} points at:` : 'This points at:'}
+            {/* The title is authored Arabic sitting inside an English line.
+                <bdi> isolates its direction so the object's name reads
+                right-to-left without dragging the rest of the line with it. */}
+            {object ? <bdi dir="auto">{object.title}</bdi> : 'This'} points at:
           </p>
           <ul className="rounds__implicated">
             {implicated.map((character) => (
