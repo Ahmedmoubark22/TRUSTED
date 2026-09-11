@@ -28,6 +28,18 @@ const CULPRITS_BY_CASE: Record<CaseId, readonly CharacterId[]> = {
   // in state from there, so authoring three possible culprits and picking one
   // at the deal is a change to this file and nothing else.
   'case-004': ['essam'],
+
+  // Case 005 — one culprit: hassan, who takes family money to cover debt.
+  'case-005': ['hassan'],
+
+  // Case 006 — one culprit: rana, who stains the dress to delay the wedding.
+  'case-006': ['rana'],
+
+  // Case 007 — one culprit: amr, who sells the match to the rival team's owner.
+  'case-007': ['amr'],
+
+  // Case 008 — two culprits: sanaa and maged, who steal the shared calf.
+  'case-008': ['sanaa', 'maged'],
 };
 
 /**
